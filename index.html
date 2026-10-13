@@ -287,6 +287,7 @@ section .wrap{position:relative;z-index:1}
 
 <section id="works">
   <div class="wrap">
+    <div class="reel rv intro" id="intro" role="button" tabindex="0" aria-label="Play Master intro"></div>
     <div class="reel rv" id="reel" role="button" tabindex="0" aria-label="Play showreel"></div>
     <div class="head">
       <h2 class="disp">All my <em>works</em></h2>
@@ -373,18 +374,19 @@ const WORKS = [
   W("PrismaX IROS 2026",     "Other","mddddd",    "ccr-00a94ac6-9ri49r","out/prismax-iros2026.mp4",41),
   W("ChatGPT vs Claude",     "Other","vs",        "ccr-dc3d0cba-hmwv78","chatgpt_vs_claude.mp4",26)
 ];
+const INTRO = {title:'Master Intro',brand:'Intro',repo:'bb',branch:'',path:'',local:'assets/master-intro.mp4',mb:3};
 const REEL = W("Showreel","Reel","mmsjeuiw","ccr-f7c51b69-luzcd9","out/showreel.mp4",89);
 /* ======================================================================= */
 
 const $ = s => document.querySelector(s);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const url = w => GH + encodeURIComponent(w.repo) + '/' + w.branch + '/' + w.path;
+const url = w => w.local || GH + encodeURIComponent(w.repo) + '/' + w.branch + '/' + w.path;
 const repoUrl = w => 'https://github.com/jeejjeH1/' + encodeURIComponent(w.repo);
 const PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l16 9-16 9z"/></svg>';
 
 // stats
 const brands = [...new Set(WORKS.map(w=>w.brand))].filter(b=>b!=='Other');
-$('#stats').innerHTML = [[WORKS.length+1,'motion videos'],[brands.length,'brands'],['100%','made in code']]
+$('#stats').innerHTML = [[WORKS.length+2,'motion videos'],[brands.length,'brands'],['100%','made in code']]
   .map(([n,l])=>`<div><b>${n}</b><span class="mono">${l}</span></div>`).join('');
 
 // marquees
@@ -395,6 +397,12 @@ fill($('#t2'), ["Selected works","Follow @0xMASTER82","Selected works","Follow @
 // showreel
 $('#reel').innerHTML = `<video muted loop playsinline preload="none" data-src="${esc(url(REEL))}"></video>
   <div class="big"><h3>Watch the <em>showreel</em></h3></div><div class="play">${PLAY}</div>`;
+
+// intro (local file, autoplays muted when visible)
+$('#intro').innerHTML = `<video muted loop playsinline preload="metadata" src="${INTRO.local}"></video>
+  <div class="big"><h3>Master <em>intro</em></h3></div><div class="play">${PLAY}</div>`;
+(function(){ const v=$('#intro video'); if(!('IntersectionObserver' in window)) return;
+  new IntersectionObserver(es=>es.forEach(e=>{ e.isIntersecting ? v.play().catch(()=>{}) : v.pause(); }),{threshold:.4}).observe(v); })();
 
 // video wall
 const grid = $('#grid'), filters = $('#filters');
@@ -426,7 +434,7 @@ const vio = 'IntersectionObserver' in window ? new IntersectionObserver(es=>es.f
 document.querySelectorAll('video[data-src]').forEach(v=>{ if(vio) vio.observe(v); });
 
 // hover preview
-document.querySelectorAll('.card, .reel').forEach(c=>{
+document.querySelectorAll('.card, .reel:not(.intro)').forEach(c=>{
   const v = c.querySelector('video');
   c.addEventListener('pointerenter', e=>{ if(e.pointerType==='mouse' && v.src){ v.play().catch(()=>{}); } });
   c.addEventListener('pointerleave', ()=>{ v.pause(); });
@@ -444,6 +452,8 @@ function open(w){
 function close(){ dv.pause(); dv.removeAttribute('src'); dv.load(); if(dlg.close) dlg.close(); else dlg.removeAttribute('open'); }
 grid.addEventListener('click', e=>{ const c=e.target.closest('.card'); if(c) open(WORKS[+c.dataset.i]); });
 $('#reel').addEventListener('click', ()=>open(REEL));
+$('#intro').addEventListener('click', ()=>open(INTRO));
+$('#intro').addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); open(INTRO); } });
 $('#reel').addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); open(REEL); } });
 $('#dx').addEventListener('click', close);
 dlg.addEventListener('click', e=>{ if(e.target===dlg) close(); });
