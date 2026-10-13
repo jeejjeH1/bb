@@ -1,0 +1,60 @@
+<!doctype html><meta charset="utf-8">
+<style>html,body{margin:0;background:#0b0a07}canvas{display:block}</style>
+<canvas id="c" width="1920" height="634"></canvas>
+<script>
+/* Seamless 6s loop of the hero art: hair/energy flutter, aura pulse, rising embers, lightning. */
+const W=1920,H=634,P=6,FPS=30;
+const cv=document.getElementById('c'),x=cv.getContext('2d');
+const rng=s=>()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};
+const clamp=(v,a=0,b=1)=>Math.min(b,Math.max(a,v));
+let img;
+const TAU=Math.PI*2;
+function boltPts(x1,y1,x2,y2,d,r){if(!d)return[[x1,y1],[x2,y2]];const L=Math.hypot(x2-x1,y2-y1),mx=(x1+x2)/2+(r()-.5)*L*.32,my=(y1+y2)/2+(r()-.5)*L*.32;return boltPts(x1,y1,mx,my,d-1,r).concat(boltPts(mx,my,x2,y2,d-1,r).slice(1));}
+const STRIKES=[[1.1,11,.62],[3.5,22,.9],[5.0,33,.7]];
+function render(t){
+  t=((t%P)+P)%P; const w=TAU*t/P;
+  const z=1.02+.012*Math.sin(w);
+  const iw=W*z,ih=img.height*W/img.width*z,ox=(W-iw)*.5,oy=(H-ih)*.5;
+  const sx=img.width/iw;
+  x.globalCompositeOperation='source-over';x.globalAlpha=1;
+  x.drawImage(img,ox,oy,iw,ih);
+  // hair + energy flutter: horizontal strips with a sine offset, tapered to zero at the region edges
+  const R={x0:W*.55,x1:W*.86,y0:0,y1:H*.42};
+  for(let y=R.y0;y<R.y1;y+=3){
+    const ky=Math.sin(Math.PI*(y-R.y0)/(R.y1-R.y0));
+    const amp=4.5*ky*ky*(1-y/R.y1*.6);
+    const off=amp*Math.sin(y*.045-w*3)+amp*.5*Math.sin(y*.11+w*2);
+    if(Math.abs(off)<.3)continue;
+    const srcX=(R.x0-ox)*sx,srcY=(y-oy)*sx,srcW=(R.x1-R.x0)*sx,srcH=3*sx;
+    x.save();x.beginPath();x.rect(R.x0+18,y,R.x1-R.x0-36,3);x.clip();
+    x.drawImage(img,srcX,srcY,srcW,srcH,R.x0+off,y,R.x1-R.x0,3);x.restore();
+  }
+  // aura pulse
+  x.globalCompositeOperation='lighter';
+  const pulse=.5+.5*Math.sin(w*2);
+  let g=x.createRadialGradient(W*.72,H*.38,10,W*.72,H*.38,H*.9);
+  g.addColorStop(0,`rgba(255,214,60,${.10+.08*pulse})`);g.addColorStop(1,'rgba(255,214,60,0)');x.fillStyle=g;x.fillRect(0,0,W,H);
+  // fist glow
+  g=x.createRadialGradient(W*.79,H*.72,5,W*.79,H*.72,H*.38);
+  g.addColorStop(0,`rgba(255,240,140,${.14+.12*Math.sin(w*3)**2})`);g.addColorStop(1,'rgba(255,240,140,0)');x.fillStyle=g;x.fillRect(0,0,W,H);
+  // embers (each wraps an integer number of times per loop -> seamless)
+  const r=rng(5);
+  for(let i=0;i<140;i++){
+    const k=1+Math.floor(r()*3),px0=W*(.45+r()*.55),ph=r(),sz=1+r()*3;
+    const yy=H*(1.1-((ph+t*k/P)%1)*1.3), xx=px0+Math.sin(w*k+i)*18;
+    const a=clamp(Math.sin(Math.PI*((ph+t*k/P)%1)));
+    x.fillStyle=`rgba(255,${200+Math.floor(r()*55)},80,${a*.85})`;x.fillRect(xx,yy,sz,sz*2.2);
+  }
+  // lightning
+  STRIKES.forEach(([at,seed,cx])=>{
+    const u=t-at;if(u<0||u>.3)return;const k=u/.3;
+    const rr=rng(seed+Math.floor(u*24)*7);
+    const p=boltPts(W*cx,-10,W*cx+(rr()-.5)*300,H*(.6+rr()*.4),6,rr);
+    x.save();x.globalAlpha=(1-k);x.lineJoin='round';x.shadowColor='#ffc61a';x.shadowBlur=30;x.strokeStyle='#ffd23a';x.lineWidth=6;
+    x.beginPath();p.forEach((q,i)=>i?x.lineTo(q[0],q[1]):x.moveTo(q[0],q[1]));x.stroke();x.strokeStyle='#fffbe6';x.lineWidth=2;x.shadowBlur=6;x.stroke();x.restore();
+    x.globalAlpha=(1-k)*.25;x.drawImage(img,ox,oy,iw,ih);x.globalAlpha=1;
+  });
+  x.globalCompositeOperation='source-over';
+}
+window.ready=new Promise(res=>{img=new Image();img.onload=()=>{window.render=render;res(true);};img.src='hero-src.jpg';});
+</script>

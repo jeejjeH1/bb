@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Motion graphics by Master (@0xMASTER82) for GenLayer, Seismic, Startale and Kast.">
 <meta property="og:title" content="MASTER Portfolio">
-<meta property="og:image" content="assets/banner-master.jpg">
+<meta property="og:image" content="https://master-portfolio-navy-sigma.vercel.app/assets/banner-master.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta property="og:url" content="https://master-portfolio-navy-sigma.vercel.app/">
 <meta name="theme-color" content="#0b0a07">
 <link rel="icon" href="assets/pfp.jpg">
 <title>MASTER Portfolio</title>
@@ -30,7 +32,7 @@
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
 html,body{overflow-x:clip;max-width:100%}
-body{background:var(--ink);color:var(--paper);font-family:var(--f-body);font-size:16px;line-height:1.55;overflow-x:hidden;margin:0}
+body{background:var(--ink);color:var(--paper);font-family:var(--f-body);font-size:16px;line-height:1.55;overflow-x:clip;margin:0}
 a{color:inherit}
 :focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .wrap{width:100%;max-width:1240px;margin-inline:auto;padding-inline:20px}
@@ -172,7 +174,8 @@ body.lock{overflow:hidden}
 @media(pointer:fine){html,body,a,button,.card,.reel{cursor:none}}
 
 /* preloader */
-#pre{position:fixed;inset:0;z-index:200;display:grid;place-items:center;pointer-events:all}
+#pre{position:fixed;inset:0;z-index:200;display:grid;place-items:center;pointer-events:all;background:var(--ink)}
+#pre.done{background:transparent;pointer-events:none}
 #pre .pa,#pre .pb{position:absolute;left:-10%;width:120%;height:51%;background:var(--ink);transition:transform .9s cubic-bezier(.77,0,.18,1) .15s}
 #pre .pa{top:0;transform-origin:left;clip-path:polygon(0 0,100% 0,100% 100%,0 85%)}
 #pre .pb{bottom:0;clip-path:polygon(0 15%,100% 0,100% 100%,0 100%)}
@@ -210,8 +213,8 @@ body.lock{overflow:hidden}
 /* hero glitch + ghost words */
 .hero h1 .l>i{position:relative}
 .hero h1 .l>i::before,.hero h1 .l>i::after{content:attr(data-t);position:absolute;left:0;top:0;opacity:0;pointer-events:none}
-.hero h1:hover .l>i::before{opacity:.9;color:#ff2d55;transform:translate(-5px,2px);animation:gl1 .5s steps(2) infinite;clip-path:inset(0 0 55% 0)}
-.hero h1:hover .l>i::after{opacity:.9;color:#18e6ff;transform:translate(5px,-2px);animation:gl2 .5s steps(2) infinite;clip-path:inset(50% 0 0 0)}
+@media(hover:hover){.hero h1:hover .l>i::before{opacity:.9;color:#ff2d55;transform:translate(-5px,2px);animation:gl1 .5s steps(2) infinite;clip-path:inset(0 0 55% 0)}
+.hero h1:hover .l>i::after{opacity:.9;color:#18e6ff;transform:translate(5px,-2px);animation:gl2 .5s steps(2) infinite;clip-path:inset(50% 0 0 0)}}
 @keyframes gl1{50%{transform:translate(-8px,-2px)}}
 @keyframes gl2{50%{transform:translate(8px,3px)}}
 .hero-art{will-change:transform}
@@ -255,17 +258,105 @@ section .wrap{position:relative;z-index:1}
 .mag{transition:transform .25s cubic-bezier(.2,.9,.2,1)}
 .stats b{font-variant-numeric:tabular-nums}
 
+/* ===== v3: gate, scroll stage, posters, cinema player, order form ===== */
+#pre .gate{position:relative;z-index:4;display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:26px;opacity:0;transform:translateY(20px);transition:opacity .4s,transform .4s;pointer-events:none}
+#pre.can .gate{opacity:1;transform:none;pointer-events:auto}
+#pre.can .cnt{opacity:0}
+.enter{font-family:var(--f-display);font-size:clamp(30px,5vw,54px);letter-spacing:.06em;text-transform:uppercase;background:var(--gold);color:var(--ink);border:0;padding:16px 46px;cursor:pointer;clip-path:polygon(14px 0,100% 0,calc(100% - 14px) 100%,0 100%);animation:beat 1s ease-in-out infinite}
+.enter:hover{background:var(--gold-hi)}
+@keyframes beat{0%,100%{transform:scale(1)}12%{transform:scale(1.07)}24%{transform:scale(1)}}
+.mute{background:none;border:0;color:var(--mute);font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;text-decoration:underline;text-underline-offset:4px}
+.sndbtn{background:transparent;border:2px solid #3a3522;color:var(--paper);font-family:var(--f-mono);font-size:11px;letter-spacing:.14em;padding:8px 10px;cursor:pointer;text-transform:uppercase}
+@media(max-width:440px){.links .btn{display:none}}
+.sndbtn[aria-pressed="true"]{border-color:var(--gold);color:var(--gold)}
+
+section.stage{position:relative;height:250vh;overflow:visible}
+.stage .sticky{position:sticky;top:0;height:100vh;height:100svh;overflow:hidden;isolation:isolate}
+.stage .hero{height:100%;min-height:0;max-height:none;aspect-ratio:auto;will-change:transform}
+video.hero-art{width:100%;height:100%;object-fit:cover;object-position:right center;background:var(--ink);animation:none;transform-origin:var(--fx,80%) var(--fy,70%)}
+.behind{position:absolute;inset:0;z-index:-5;background:var(--gold);display:grid;place-items:center;overflow:hidden;color:var(--ink)}
+.behind::before{content:"";position:absolute;inset:-50%;background:repeating-conic-gradient(from 0deg at 50% 50%,transparent 0 5deg,rgba(11,10,7,.12) 5deg 6deg);animation:spin 50s linear infinite}
+.behind::after{content:"";position:absolute;inset:0;background:radial-gradient(circle,rgba(11,10,7,.22) 1.6px,transparent 1.9px) 0 0/16px 16px}
+.behind .bt{position:relative;z-index:1;text-align:center;transform:skewX(-8deg)}
+.behind h2{font-family:var(--f-display);font-weight:400;font-size:clamp(70px,16vw,240px);line-height:.85;margin:0;text-transform:uppercase;text-shadow:6px 6px 0 var(--paper)}
+.behind p{margin:18px 0 0}
+#shatter{position:absolute;inset:0;width:100%;height:100%;z-index:6;pointer-events:none}
+.scrollhint{position:absolute;left:50%;bottom:22px;transform:translateX(-50%);z-index:5;color:var(--gold);display:flex;flex-direction:column;align-items:center;gap:6px;animation:bob 1.6s ease-in-out infinite}
+@keyframes bob{50%{transform:translate(-50%,8px)}}
+@media(max-width:700px){
+  section.stage{height:210vh}
+  video.hero-art{position:absolute;inset:0 0 auto 0;height:68%;object-position:78% center}
+  .scrollhint{display:none}
+}
+
+.card .frame img,.card .frame video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.card .frame video{opacity:0;transition:opacity .3s}
+.card.playing .frame video{opacity:1}
+.card .frame img{filter:saturate(.75) brightness(.85);transition:filter .35s,transform .6s}
+.card:hover .frame img{filter:none;transform:scale(1.05)}
+.card .sum{margin:2px 0 0;color:var(--mute);font-size:14px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* cinema player */
+.wipe{position:fixed;inset:0;z-index:150;pointer-events:none}
+.wipe i{position:absolute;left:-20%;width:140%;height:52%;transform:translateX(-120%) skewX(-18deg)}
+.wipe i:nth-child(1){top:0;background:var(--gold)}
+.wipe i:nth-child(2){bottom:0;background:var(--ink);border-top:6px solid var(--gold)}
+.wipe.in i{animation:wIn .32s cubic-bezier(.7,0,.2,1) forwards}
+.wipe.in i:nth-child(2){animation-delay:.05s}
+.wipe.out i{transform:translateX(0) skewX(-18deg);animation:wOut .45s cubic-bezier(.7,0,.2,1) forwards}
+.wipe.out i:nth-child(2){animation-delay:.06s}
+@keyframes wIn{to{transform:translateX(0) skewX(-18deg)}}
+@keyframes wOut{to{transform:translateX(120%) skewX(-18deg)}}
+dialog#dlg{width:min(1180px,calc(100% - 24px))}
+.dlg .bar{align-items:flex-start}
+.dlg .info{min-width:0;flex:1 1 320px}
+.dlg .brand{color:var(--gold);margin-bottom:6px}
+.dlg .dsum{margin:8px 0 0;color:#e6dfc9;font-size:15px;max-width:70ch}
+.dlg .nav2{display:flex;gap:8px}
+.dlg .nav2 button{font-family:var(--f-display);font-size:22px;width:48px;height:44px;background:transparent;color:var(--gold);border:2px solid var(--gold);cursor:pointer}
+.dlg .nav2 button:hover{background:var(--gold);color:var(--ink)}
+.dlg .count{color:var(--mute);align-self:center}
+
+/* order form */
+.order{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:clamp(28px,5vw,70px);align-items:start;margin-top:40px}
+.order .pitch p{color:#e6dfc9;font-size:18px;max-width:42ch;margin:0 0 18px}
+.order .pitch ol{margin:0;padding:0;list-style:none;display:grid;gap:12px;counter-reset:s}
+.order .pitch li{display:flex;gap:14px;align-items:baseline;color:var(--paper)}
+.order .pitch li::before{counter-increment:s;content:counter(s,decimal-leading-zero);font-family:var(--f-display);color:var(--gold);font-size:26px}
+form.brief{background:var(--ink-2);border:2px solid var(--line);padding:clamp(18px,3vw,30px);display:grid;gap:18px;box-shadow:10px 10px 0 var(--gold)}
+.fld{display:grid;gap:8px;min-width:0}
+.fld>label,.fld>legend{font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);padding:0}
+fieldset.fld{border:0;margin:0;padding:0}
+.fld input,.fld textarea{font:inherit;color:var(--paper);background:var(--ink);border:2px solid #3a3522;padding:12px 14px;width:100%;transition:border-color .2s}
+.fld input:focus,.fld textarea:focus{outline:none;border-color:var(--gold)}
+.fld textarea{min-height:110px;resize:vertical}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opts input{position:absolute;opacity:0;pointer-events:none}
+.opts label{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;border:2px solid #3a3522;padding:9px 12px;cursor:pointer;transition:.2s}
+.opts input:checked+label{background:var(--gold);border-color:var(--gold);color:var(--ink)}
+.opts input:focus-visible+label{outline:3px solid var(--gold);outline-offset:2px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.err{color:#ff6b6b;font-size:14px;min-height:1em;margin:0}
+.preview{font-family:var(--f-mono);font-size:12px;white-space:pre-wrap;background:var(--ink);border:2px dashed #3a3522;padding:12px;color:var(--mute);max-height:180px;overflow:auto}
+.sendrow{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,140%);z-index:160;background:var(--gold);color:var(--ink);font-weight:800;padding:14px 20px;max-width:calc(100% - 32px);transition:transform .35s cubic-bezier(.2,.9,.2,1);box-shadow:6px 6px 0 #000}
+.toast.on{transform:translate(-50%,0)}
+@media(max-width:800px){.order{grid-template-columns:1fr}.row2{grid-template-columns:1fr}}
+
 @media(prefers-reduced-motion:reduce){
+  section.stage{height:auto}.stage .sticky{position:relative;height:auto;min-height:620px}
   *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 }
 </style>
 </head>
 <body>
+<noscript><style>#pre{display:none}</style></noscript>
 
 <div id="bar"></div>
-<div id="pre" aria-hidden="true">
+<div id="pre">
   <div class="pa"></div><div class="pb"></div>
-  <div class="mid"><h2>Master</h2><div class="cnt" id="cnt">0</div></div>
+  <div class="mid"><h2>Master</h2><div class="cnt" id="cnt">0</div>
+    <div class="gate"><button class="enter" id="enter" type="button">Enter</button><button class="mute" id="enterQuiet" type="button">Enter without sound</button></div></div>
   <div class="lb" id="lb"></div>
 </div>
 <div class="grain" aria-hidden="true"></div>
@@ -279,13 +370,21 @@ section .wrap{position:relative;z-index:1}
     <div class="links">
       <a href="#works">Works</a>
       <a href="#about">About</a>
+      <a href="#order">Hire me</a>
+      <button class="sndbtn" id="snd" type="button" aria-pressed="false">Sound off</button>
       <a class="btn" href="https://x.com/0xMASTER82" target="_blank" rel="noopener">Follow on X</a>
     </div>
   </div>
 </nav>
 
-<header class="hero" id="top">
-  <div class="hero-art"></div>
+<section class="stage" id="top">
+<div class="sticky">
+<div class="behind" aria-hidden="true"><div class="bt"><h2>All my<br>works</h2><p class="mono">25 motion pieces · keep scrolling</p></div></div>
+<header class="hero" id="hero">
+  <video class="hero-art" autoplay muted loop playsinline preload="auto" poster="assets/hero-poster.jpg" aria-hidden="true">
+    <source src="assets/hero-loop.webm" type="video/webm">
+    <source src="assets/hero-loop.mp4" type="video/mp4">
+  </video>
   <canvas id="sparks"></canvas>
   <div class="wrap">
     <div class="tag mono"><b>Motion graphics · 2026</b></div>
@@ -297,7 +396,11 @@ section .wrap{position:relative;z-index:1}
     </div>
     <div class="stats" id="stats"></div>
   </div>
+  <div class="scrollhint mono" aria-hidden="true">Scroll<span>↓</span></div>
 </header>
+<canvas id="shatter" aria-hidden="true"></canvas>
+</div>
+</section>
 
 <div class="strip" aria-hidden="true"><div class="track" id="t1"></div></div>
 
@@ -333,14 +436,41 @@ section .wrap{position:relative;z-index:1}
 <section class="contact" id="contact">
   <div class="wrap rv">
     <h2 class="disp">Let's <em>build.</em></h2>
-    <div class="handle">
-      <span class="at">@0xMASTER82</span>
-      <a class="btn" href="https://x.com/0xMASTER82" target="_blank" rel="noopener">Message me on X</a>
-      <a class="btn ghost" href="https://github.com/jeejjeH1" target="_blank" rel="noopener">GitHub</a>
+    <div class="order" id="order">
+      <div class="pitch">
+        <p>Tell me about your project in under a minute. The form turns your answers into a message for my X DMs.</p>
+        <ol>
+          <li>Fill in the brief</li>
+          <li>Tap “Send on X”: the message is copied and my X profile opens</li>
+          <li>Tap Message on my profile and paste</li>
+        </ol>
+        <div class="handle" style="margin-top:28px">
+          <span class="at">@0xMASTER82</span>
+          <a class="btn ghost" href="https://github.com/jeejjeH1" target="_blank" rel="noopener">GitHub</a>
+        </div>
+      </div>
+      <form class="brief" id="brief" novalidate>
+        <div class="row2">
+          <div class="fld"><label for="f-name">Your name or @handle</label><input id="f-name" name="name" autocomplete="nickname" placeholder="@yourproject"></div>
+          <div class="fld"><label for="f-proj">Project / brand</label><input id="f-proj" name="proj" placeholder="e.g. GenLayer"></div>
+        </div>
+        <fieldset class="fld"><legend>What do you need?</legend><div class="opts" id="o-type"></div></fieldset>
+        <div class="fld"><label for="f-about">What's the project about?</label><textarea id="f-about" name="about" placeholder="The post or launch this video is for, key message, any links"></textarea></div>
+        <fieldset class="fld"><legend>Budget</legend><div class="opts" id="o-budget"></div></fieldset>
+        <fieldset class="fld"><legend>Timeline</legend><div class="opts" id="o-time"></div></fieldset>
+        <p class="err" id="f-err" role="alert"></p>
+        <div class="preview" id="f-prev" aria-live="polite"></div>
+        <div class="sendrow">
+          <button class="btn" type="submit" id="f-send">Send on X</button>
+          <button class="btn ghost" type="button" id="f-post">Post it publicly</button>
+        </div>
+      </form>
     </div>
   </div>
 </section>
 
+<div class="wipe" id="wipe" aria-hidden="true"><i></i><i></i></div>
+<div class="toast" id="toast" role="status"></div>
 <footer>
   <div class="wrap mono"><span>© 2026 Master</span><span>x.com/0xMASTER82</span></div>
 </footer>
@@ -349,45 +479,21 @@ section .wrap{position:relative;z-index:1}
   <div class="dlg">
     <video id="dv" controls playsinline></video>
     <div class="bar">
-      <h3 id="dt"></h3>
+      <div class="info"><div class="brand mono" id="db"></div><h3 id="dt"></h3><p class="dsum" id="ds"></p></div>
       <div class="acts">
-        <a class="btn ghost" id="dsrc" href="#" target="_blank" rel="noopener">Source code</a>
-        <button class="btn" id="dx" type="button">Close</button>
+        <div class="nav2"><button type="button" id="dp" aria-label="Previous work">←</button><span class="count mono" id="dc"></span><button type="button" id="dn" aria-label="Next work">→</button></div>
+        <a class="btn" id="dpage" href="#">Project page</a>
+        <a class="btn ghost" id="dsrc" href="#" target="_blank" rel="noopener">Source</a>
+        <button class="btn ghost" id="dx" type="button">Close</button>
       </div>
     </div>
   </div>
 </dialog>
 
 <script>
-/* ===== YOUR WORKS. Each video plays straight from its GitHub repo. ===== */
+/* ===== WORKS: generated by build/build.py from build/works.json. Full videos stream from GitHub. ===== */
 const GH = "https://raw.githubusercontent.com/jeejjeH1/";
-const W = (title, brand, repo, branch, path, mb) => ({title, brand, repo, branch, path, mb});
-const WORKS = [
-  W("Many Minds",            "GenLayer","foppu",  "ccr-fc918877-fr3lq6","genlayer-many-minds.mp4",42),
-  W("Intelligent Contracts", "GenLayer","pppp",   "ccr-f6dd9cdc-3hger9","genlayer-motion/video/genlayer-intelligent-contracts.mp4",28),
-  W("Thread of Light",       "GenLayer","pppp",   "ccr-f6dd9cdc-3hger9","genlayer-motion/video/genlayer-thread-of-light.mp4",32),
-  W("Appeals",               "GenLayer","gffde",  "ccr-ae9c438b-icyxvu","motion/out/genlayer-appeals-x.mp4",28),
-  W("Roadmap",               "GenLayer","hhh",    "ccr-5cfdac0f-tem78f","genlayer-roadmap/genlayer-roadmap.mp4",13),
-  W("Insurance",             "GenLayer","hjh",    "ccr-ccdbf2e2-oekf0g","out/genlayer_insurance_lite.mp4",27),
-  W("DeFi",                  "GenLayer","fdddcf", "ccr-82ebc4f2-ye5ngc","genlayer_defi_motion.mp4",69),
-  W("Rally",                 "GenLayer","rally",  "ccr-7063b054-l777vz","motion/genlayer-rally.mp4",23),
-  W("Internet Court",        "GenLayer","fj",     "ccr-914521c3-px7ctj","video/internet_court_x.mp4",30),
-  W("GenVM",                 "GenLayer","genlayer-","ccr-d149dadf-p4eesg","video/genvm_preview.mp4",22),
-  W("GenVM Clean Cut",       "GenLayer","genlayer-","ccr-d149dadf-p4eesg","video2/genvm_clean_preview.mp4",23),
-  W("Agent Economy",        "GenLayer","dgg",    "ccr-a77fff71-dj3x0n","motion/out/genlayer_agent_economy.mp4",66),
-  W("GenLayer Motion",       "GenLayer","mmmmm",  "ccr-11d31024-629zdo","out/genlayer-motion.mp4",98),
-  W("TEE Explainer",         "Seismic","iyj",     "ccr-befa8c2a-6gnzwp","seismic-tee-video/seismic-tee-explainer.mp4",81),
-  W("Ecosystem",             "Seismic","see",     "ccr-bd51eb29-bmmhq7","out/seismic-ecosystem-720p.mp4",4),
-  W("Stablecoin Stack",      "Seismic","kwke",    "ccr-dec92c6a-ycrlsh","seismic-stablecoin-stack-share.mp4",12),
-  W("Startale Motion",       "Startale","iiiii",  "ccr-090c8fbf-n8t6nm","startale-motion/startale_motion.mp4",35),
-  W("Bond JPYSC",            "Startale","ogop",   "ccr-8e509b13-1pscao","motion/output/startale-bond-jpysc-16x9.mp4",72),
-  W("HEROES Live",           "Startale","gjfd",   "ccr-63076c60-eblojq","output/HEROES_live_Startale_16x9.mp4",28),
-  W("Pieverse Promo",        "Startale","aaas",   "ccr-d3ec801b-10jwzr","video/startale-pieverse-promo.mp4",32),
-  W("Kast Motion",           "Kast","kuiohhu",    "ccr-234e06a6-nt5dej","kast-motion/kast_motion_16x9.mp4",41),
-  W("Kast LatAm 0fx",        "Kast","gh",         "ccr-672a9c92-3smcjj","kast-latam-0fx/out/kast-latam-0fx-1080.mp4",28),
-  W("What is Fomies",        "Other","fomies",    "ccr-6c7a3b5b-cawlyb","video/fomies_what_is.mp4",93),
-  W("PrismaX IROS 2026",     "Other","mddddd",    "ccr-00a94ac6-9ri49r","out/prismax-iros2026.mp4",41)
-];
+const WORKS = [{"slug": "many-minds", "title": "Many Minds", "brand": "GenLayer", "repo": "foppu", "branch": "ccr-fc918877-fr3lq6", "path": "genlayer-many-minds.mp4", "mb": 42, "len": "1:12", "sum": "Why does GenLayer use several AI models instead of one? A 72-second explainer that follows one AI failing as a single point of failure, then a network of validators catching its mistakes."}, {"slug": "intelligent-contracts", "title": "Intelligent Contracts", "brand": "GenLayer", "repo": "pppp", "branch": "ccr-f6dd9cdc-3hger9", "path": "genlayer-motion/video/genlayer-intelligent-contracts.mp4", "mb": 28, "len": "0:56", "sum": "Why GenLayer needs direct web access. A calm, minimal piece with a 3D cat-astronaut mascot and an extruded GenLayer logo, built for an X thread on intelligent contracts."}, {"slug": "thread-of-light", "title": "Thread of Light", "brand": "GenLayer", "repo": "pppp", "branch": "ccr-f6dd9cdc-3hger9", "path": "genlayer-motion/video/genlayer-thread-of-light.mp4", "mb": 32, "len": "0:56", "sum": "The second cut of the Intelligent Contracts post: no character, only particles and a single thread of light that carries the idea from the chain to the open web."}, {"slug": "appeals", "title": "Appeals", "brand": "GenLayer", "repo": "gffde", "branch": "ccr-ae9c438b-icyxvu", "path": "motion/out/genlayer-appeals-x.mp4", "mb": 28, "len": "1:20", "sum": "An 80-second explainer on why the right to challenge a decision matters in GenLayer: what happens when an AI-powered contract gets it wrong, and how appeals bring in more validators."}, {"slug": "roadmap", "title": "Roadmap", "brand": "GenLayer", "repo": "hhh", "branch": "ccr-5cfdac0f-tem78f", "path": "genlayer-roadmap/genlayer-roadmap.mp4", "mb": 13, "len": "0:42", "sum": "The road to GenLayer mainnet in 42 seconds: five milestones from the 2024 whitepaper through Asimov, Bradbury and Clarke to mainnet, each with its own date card."}, {"slug": "insurance", "title": "Insurance", "brand": "GenLayer", "repo": "hjh", "branch": "ccr-ccdbf2e2-oekf0g", "path": "out/genlayer_insurance_lite.mp4", "mb": 27, "len": "1:06", "sum": "GenLayer applied to insurance: a flight-delay policy that pays out on its own, with intelligent contracts reading real-world data and validators agreeing on the result."}, {"slug": "defi", "title": "DeFi", "brand": "GenLayer", "repo": "fdddcf", "branch": "ccr-82ebc4f2-ye5ngc", "path": "genlayer_defi_motion.mp4", "mb": 69, "len": "1:46", "sum": "Can the next generation of DeFi go beyond predefined rules? A clean, light-themed piece that contrasts rigid if/else contracts with a protocol that evaluates the real world."}, {"slug": "rally", "title": "Rally", "brand": "GenLayer", "repo": "rally", "branch": "ccr-7063b054-l777vz", "path": "motion/genlayer-rally.mp4", "mb": 23, "len": "0:25", "sum": "Launch video for the GenLayer campaign on Rally: a live prize pool counter, three simple steps and a call to join with real content instead of farming."}, {"slug": "internet-court", "title": "Internet Court", "brand": "GenLayer", "repo": "fj", "branch": "ccr-914521c3-px7ctj", "path": "video/internet_court_x.mp4", "mb": 30, "len": "2:09", "sum": "A 2:09 case study for the MetaMask × GenLayer Internet Court thread: an AI agent stays inside its budget and still does the wrong thing, so a decentralized jury decides."}, {"slug": "genvm", "title": "GenVM", "brand": "GenLayer", "repo": "genlayer-", "branch": "ccr-d149dadf-p4eesg", "path": "video/genvm_preview.mp4", "mb": 22, "len": "0:30", "sum": "A creepy, fur-and-glitch take on GenVM. A hundred cat eyes stop agreeing once contracts have to call an LLM or read a webpage, and the camera dives into a pupil to reveal GenVM."}, {"slug": "genvm-clean-cut", "title": "GenVM Clean Cut", "brand": "GenLayer", "repo": "genlayer-", "branch": "ccr-d149dadf-p4eesg", "path": "video2/genvm_clean_preview.mp4", "mb": 23, "len": "0:30", "sum": "The same GenVM story told a completely different way: a premium keynote-style cut with Swiss-grid type, colour-block transitions and every cut on a 120 BPM beat."}, {"slug": "agent-economy", "title": "Agent Economy", "brand": "GenLayer", "repo": "dgg", "branch": "ccr-a77fff71-dj3x0n", "path": "motion/out/genlayer_agent_economy.mp4", "mb": 66, "len": "0:55", "sum": "When two AI agents make a deal and disagree, who decides? A 55-second story from an agent shopping for you to a courthouse that collapses under millions of disputes, and GenLayer as the new trust layer."}, {"slug": "genlayer-motion", "title": "GenLayer Motion", "brand": "GenLayer", "repo": "mmmmm", "branch": "ccr-11d31024-629zdo", "path": "out/genlayer-motion.mp4", "mb": 98, "len": "1:48", "sum": "A 108-second piece on GenLayer as the judgment layer of the agentic economy, with a 3D network of about 2,200 agents and a vectorised GenLayer mark extruded in 3D."}, {"slug": "tee-explainer", "title": "TEE Explainer", "brand": "Seismic", "repo": "iyj", "branch": "ccr-befa8c2a-6gnzwp", "path": "seismic-tee-video/seismic-tee-explainer.mp4", "mb": 81, "len": "1:30", "sum": "What are Trusted Execution Environments? A 90-second Seismic explainer with a 3D rock golem, a leaking glass blockchain and shielded storage tiles, in light brown, cream and black."}, {"slug": "ecosystem", "title": "Ecosystem", "brand": "Seismic", "repo": "see", "branch": "ccr-bd51eb29-bmmhq7", "path": "out/seismic-ecosystem-720p.mp4", "mb": 4, "len": "1:16", "sum": "The 11 fintechs already building on Seismic. Cut to a 120 BPM grid, with neobanks, payments, credit and AI finance introduced on each beat and the stablecoin stack explained."}, {"slug": "stablecoin-stack", "title": "Stablecoin Stack", "brand": "Seismic", "repo": "kwke", "branch": "ccr-dec92c6a-ycrlsh", "path": "seismic-stablecoin-stack-share.mp4", "mb": 12, "len": "1:10", "sum": "Stablecoins may not replace banks, they may become the infrastructure. A Seismic piece on the full stablecoin stack, private payroll on a public chain, and privacy without zero visibility."}, {"slug": "startale-motion", "title": "Startale Motion", "brand": "Startale", "repo": "iiiii", "branch": "ccr-090c8fbf-n8t6nm", "path": "startale-motion/startale_motion.mp4", "mb": 35, "len": "1:19", "sum": "Why is crypto adoption still hard, and how does Startale make it simple? A 79-second piece at 128 BPM with a cursor, pastel mesh, bubbles and a logo that assembles square by square."}, {"slug": "bond-jpysc", "title": "Bond JPYSC", "brand": "Startale", "repo": "ogop", "branch": "ccr-8e509b13-1pscao", "path": "motion/output/startale-bond-jpysc-16x9.mp4", "mb": 72, "len": "2:14", "sum": "Startale Bond × JPYSC with a narrated voiceover: a Three.js scene with extruded logos, a 3D bond card and a 3D “5%”, with kinetic type synced to the script."}, {"slug": "heroes-live", "title": "HEROES Live", "brand": "Startale", "repo": "gjfd", "branch": "ccr-63076c60-eblojq", "path": "output/HEROES_live_Startale_16x9.mp4", "mb": 28, "len": "0:34", "sum": "Launch video for HEROES going live on the Startale App: gameplay highlights cut from a screen recording, wrapped in motion graphics, with rewards for the most active players."}, {"slug": "pieverse-promo", "title": "Pieverse Promo", "brand": "Startale", "repo": "aaas", "branch": "ccr-d3ec801b-10jwzr", "path": "video/startale-pieverse-promo.mp4", "mb": 32, "len": "0:25", "sum": "Startale App × Pieverse: deposit $5 and meet your AI agent. A bright pastel promo with a fluffy cat character and a single, clear offer."}, {"slug": "kast-motion", "title": "Kast Motion", "brand": "Kast", "repo": "kuiohhu", "branch": "ccr-234e06a6-nt5dej", "path": "kast-motion/kast_motion_16x9.mp4", "mb": 41, "len": "1:10", "sum": "Bridging crypto and the real world: a 70-second KAST piece in the brand's black, white and mint, covering payments, stablecoins, global money and a single “Pay” tap."}, {"slug": "kast-latam-0fx", "title": "Kast LatAm 0fx", "brand": "Kast", "repo": "gh", "branch": "ccr-672a9c92-3smcjj", "path": "kast-latam-0fx/out/kast-latam-0fx-1080.mp4", "mb": 28, "len": "0:22", "sum": "0% FX fees are now live across LATAM. A 22-second announcement in square and 16:9, with a slot-machine 0%, a dot-matrix map of Latin America and a card that waives the fee."}, {"slug": "what-is-fomies", "title": "What is Fomies", "brand": "Other", "repo": "fomies", "branch": "ccr-6c7a3b5b-cawlyb", "path": "video/fomies_what_is.mp4", "mb": 93, "len": "1:00", "sum": "What is @FomiesNFT? A tour of the Department of FOMO: an NFT collection built around a fictional government office, with corridors, a boarded door and WINDOW 3."}, {"slug": "prismax-iros-2026", "title": "PrismaX IROS 2026", "brand": "Other", "repo": "mddddd", "branch": "ccr-00a94ac6-9ri49r", "path": "out/prismax-iros2026.mp4", "mb": 41, "len": "0:40", "sum": "PrismaX at IROS 2026 in Pittsburgh: a 40-second brand piece built from event photos, with bronze slats from the booth wall, the tech talk, the teleop rig and the numbers."}];
 const INTRO = {title:'Master Intro',brand:'Intro',repo:'bb',branch:'',path:'',local:'assets/master-intro.mp4',mb:3};
 /* ======================================================================= */
 
@@ -419,13 +525,15 @@ const grid = $('#grid'), filters = $('#filters');
 grid.innerHTML = WORKS.map((w,i)=>`
   <button class="card rv" type="button" data-i="${i}" data-brand="${esc(w.brand)}" aria-label="Play ${esc(w.title)}">
     <div class="frame">
-      <video muted loop playsinline preload="none" data-src="${esc(url(w))}"></video>
+      <img src="assets/works/${w.slug}.jpg" alt="" loading="lazy" decoding="async" width="640" height="360">
+      <video muted loop playsinline preload="none" data-src="assets/works/${w.slug}.mp4"></video>
       <span class="num">${String(i+1).padStart(2,'0')}</span>
       <div class="play">${PLAY}</div>
     </div>
     <div class="body">
       <h3>${esc(w.title)}</h3>
-      <div class="meta mono"><span>${esc(w.brand)}</span><span>${w.mb} MB</span></div>
+      <p class="sum">${esc(w.sum)}</p>
+      <div class="meta mono"><span>${esc(w.brand)}</span><span>${w.len}</span></div>
     </div>
   </button>`).join('');
 const tags = ['All', ...new Set(WORKS.map(w=>w.brand))];
@@ -436,31 +544,55 @@ filters.addEventListener('click', e=>{
   grid.querySelectorAll('.card').forEach(c=>c.classList.toggle('hide', b.dataset.t!=='All' && c.dataset.brand!==b.dataset.t));
 });
 
-// lazy first-frame thumbnails: only load videos near the viewport
-const vio = 'IntersectionObserver' in window ? new IntersectionObserver(es=>es.forEach(e=>{
-  if(!e.isIntersecting) return;
-  const v = e.target; v.preload = 'metadata'; v.src = v.dataset.src + '#t=1.5'; vio.unobserve(v);
-}),{rootMargin:'300px'}) : null;
-document.querySelectorAll('video[data-src]').forEach(v=>{ if(vio) vio.observe(v); });
-
-// hover preview
-document.querySelectorAll('.card, .reel:not(.intro)').forEach(c=>{
-  const v = c.querySelector('video');
-  c.addEventListener('pointerenter', e=>{ if(e.pointerType==='mouse' && v.src){ v.play().catch(()=>{}); } });
-  c.addEventListener('pointerleave', ()=>{ v.pause(); });
+// light 3s previews: on hover with a mouse, or when a card sits in the middle of a phone screen
+function preview(card, on){
+  const v = card.querySelector('video'); if(!v) return;
+  if(on){ if(!v.src) v.src = v.dataset.src; v.play().then(()=>card.classList.add('playing')).catch(()=>{}); }
+  else { v.pause(); card.classList.remove('playing'); }
+}
+grid.querySelectorAll('.card').forEach(c=>{
+  c.addEventListener('pointerenter', e=>{ if(e.pointerType==='mouse') preview(c,true); });
+  c.addEventListener('pointerleave', e=>{ if(e.pointerType==='mouse') preview(c,false); });
 });
+if(!matchMedia('(pointer:fine)').matches && 'IntersectionObserver' in window){
+  const pio = new IntersectionObserver(es=>es.forEach(e=>preview(e.target, e.isIntersecting)),{rootMargin:'-35% 0px -35% 0px'});
+  grid.querySelectorAll('.card').forEach(c=>pio.observe(c));
+}
 
-// modal player
-const dlg = $('#dlg'), dv = $('#dv');
-function open(w){
-  $('#dt').textContent = w.title;
-  $('#dsrc').href = repoUrl(w);
-  dv.src = url(w);
-  if(dlg.showModal) dlg.showModal(); else dlg.setAttribute('open','');
-  dv.play().catch(()=>{});
+// cinema player: a slanted wipe covers the page, the player opens behind it, the wipe leaves
+const dlg = $('#dlg'), dv = $('#dv'), wipe = $('#wipe');
+let cur = -1;
+const visibleIdx = () => [...grid.querySelectorAll('.card:not(.hide)')].map(c=>+c.dataset.i);
+function fill_(w, i){
+  $('#dt').textContent = w.title; $('#db').textContent = w.brand + (w.len ? ' · ' + w.len : '');
+  $('#ds').textContent = w.sum || ''; $('#dsrc').href = repoUrl(w);
+  const page = $('#dpage'); page.hidden = !w.slug; if(w.slug) page.href = 'work/' + w.slug + '/';
+  const nav = dlg.querySelector('.nav2'); nav.hidden = i < 0;
+  if(i >= 0){ const vi = visibleIdx(); $('#dc').textContent = `${vi.indexOf(i)+1} / ${vi.length}`; }
+  dv.poster = w.slug ? 'assets/works/' + w.slug + '.jpg' : 'assets/hero-poster.jpg';
+  dv.src = url(w); dv.play().catch(()=>{});
+}
+function runWipe(mid){
+  if(RM_){ mid(); return; }
+  wipe.className = 'wipe in'; sfx.whoosh();
+  setTimeout(()=>{ mid(); wipe.className = 'wipe out'; setTimeout(()=>{ wipe.className = 'wipe'; }, 520); }, 340);
+}
+const RM_ = matchMedia('(prefers-reduced-motion:reduce)').matches;
+function open(w, i=-1){
+  cur = i;
+  runWipe(()=>{ fill_(w, i); if(!dlg.open){ if(dlg.showModal) dlg.showModal(); else dlg.setAttribute('open',''); } });
+}
+function step(d){
+  if(cur < 0) return; const vi = visibleIdx(); const k = (vi.indexOf(cur) + d + vi.length) % vi.length;
+  cur = vi[k]; runWipe(()=>fill_(WORKS[cur], cur));
 }
 function close(){ dv.pause(); dv.removeAttribute('src'); dv.load(); if(dlg.close) dlg.close(); else dlg.removeAttribute('open'); }
-grid.addEventListener('click', e=>{ const c=e.target.closest('.card'); if(c) open(WORKS[+c.dataset.i]); });
+grid.addEventListener('click', e=>{ const c=e.target.closest('.card'); if(c) open(WORKS[+c.dataset.i], +c.dataset.i); });
+$('#dp').addEventListener('click', ()=>step(-1));
+$('#dn').addEventListener('click', ()=>step(1));
+dlg.addEventListener('keydown', e=>{ if(e.key==='ArrowRight'){ e.preventDefault(); step(1); } if(e.key==='ArrowLeft'){ e.preventDefault(); step(-1); } });
+(function(){ let x0=null,y0=0; dlg.addEventListener('touchstart',e=>{x0=e.touches[0].clientX;y0=e.touches[0].clientY;},{passive:true});
+  dlg.addEventListener('touchend',e=>{ if(x0===null) return; const dx=e.changedTouches[0].clientX-x0, dy=e.changedTouches[0].clientY-y0; if(Math.abs(dx)>70 && Math.abs(dx)>Math.abs(dy)*1.5) step(dx<0?1:-1); x0=null; }); })();
 $('#intro').addEventListener('click', ()=>open(INTRO));
 $('#intro').addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); open(INTRO); } });
 $('#dx').addEventListener('click', close);
@@ -481,16 +613,19 @@ const flash = () => { const f=$('#flash'); f.classList.remove('on'); void f.offs
 // preloader
 (function(){
   const pre = $('#pre');
-  const go = () => { document.body.classList.add('ready'); document.body.classList.remove('lock'); pre.classList.add('done'); setTimeout(()=>pre.remove(),1300); scramble(document.querySelector('.hero .tag b')); };
+  const go = (withSound) => { if(withSound){ setSound(true); sfx.impact(); } document.body.classList.add('ready'); document.body.classList.remove('lock'); pre.classList.add('done'); flash(); setTimeout(()=>pre.remove(),1300); scramble(document.querySelector('.hero .tag b')); };
+  const gate = () => { pre.classList.add('can'); setTimeout(()=>$('#enter').focus({preventScroll:true}),50); };
+  $('#enter').addEventListener('click', ()=>go(true));
+  $('#enterQuiet').addEventListener('click', ()=>go(false));
   if(RM){ document.body.classList.add('ready'); pre.remove(); return; }
   document.body.classList.add('lock');
   const t0 = performance.now(), D = 1500; let fin = false;
   (function tick(t){
     const p = Math.min(1,(t-t0)/D), e = 1-Math.pow(1-p,3);
     $('#cnt').textContent = Math.round(e*100); $('#lb').style.width = (e*100)+'%';
-    if(p<1) requestAnimationFrame(tick); else if(!fin){ fin=true; go(); }
+    if(p<1) requestAnimationFrame(tick); else if(!fin){ fin=true; gate(); }
   })(t0);
-  setTimeout(()=>{ if(!fin){ fin=true; go(); } }, 3500); // fail-safe
+  setTimeout(()=>{ if(!fin){ fin=true; gate(); } }, 3000); // fail-safe
 })();
 
 // scramble text
@@ -627,7 +762,6 @@ const anims = [...document.querySelectorAll('.track')].map(t=>t.getAnimations()[
 addEventListener('scroll', ()=>{
   const h = document.documentElement.scrollHeight - innerHeight;
   bar.style.width = (scrollY/h*100)+'%';
-  if(scrollY<innerHeight) art.style.transform = `translateY(${scrollY*.15}px)`;
   document.querySelectorAll('.gw').forEach(g=>{ const r=g.parentElement.getBoundingClientRect(); g.style.setProperty('--gx', (r.top*.35)+'px'); });
   const dy = scrollY-lastY; lastY = scrollY; vel = dy; if(dy) dir = Math.sign(dy);
 }, {passive:true});
@@ -665,6 +799,202 @@ if('IntersectionObserver' in window && !RM){
     requestAnimationFrame(loop);
   })();
 })();
+
+/* ================= sound (Web Audio, only after the visitor opts in) ================= */
+let SOUND = false, AC = null;
+const sndBtn = $('#snd');
+function setSound(on){
+  SOUND = on;
+  if(on && !AC){ try{ AC = new (window.AudioContext || window.webkitAudioContext)(); }catch(e){ SOUND = false; } }
+  if(AC && AC.state === 'suspended') AC.resume();
+  sndBtn.setAttribute('aria-pressed', SOUND); sndBtn.textContent = SOUND ? 'Sound on' : 'Sound off';
+}
+sndBtn.addEventListener('click', ()=>{ setSound(!SOUND); if(SOUND) sfx.tick(); });
+function noiseBuf(d){ const b = AC.createBuffer(1, Math.floor(AC.sampleRate*d), AC.sampleRate), c = b.getChannelData(0); for(let i=0;i<c.length;i++) c[i] = Math.random()*2-1; return b; }
+function out(v){ const g = AC.createGain(); g.gain.value = v; g.connect(AC.destination); return g; }
+const sfx = {
+  impact(){
+    if(!SOUND || !AC) return; const t = AC.currentTime, m = out(.9);
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.frequency.setValueAtTime(150, t); o.frequency.exponentialRampToValueAtTime(34, t+.5);
+    g.gain.setValueAtTime(1, t); g.gain.exponentialRampToValueAtTime(.001, t+1.6); o.connect(g).connect(m); o.start(t); o.stop(t+1.7);
+    const n = AC.createBufferSource(); n.buffer = noiseBuf(1.2);
+    const f = AC.createBiquadFilter(); f.type = 'lowpass'; f.frequency.setValueAtTime(7000, t); f.frequency.exponentialRampToValueAtTime(200, t+.8);
+    const ng = AC.createGain(); ng.gain.setValueAtTime(.6, t); ng.gain.exponentialRampToValueAtTime(.001, t+1); n.connect(f).connect(ng).connect(m); n.start(t);
+    [174.6, 207.7, 261.6, 349.2].forEach(fr=>{
+      const s = AC.createOscillator(), sg = AC.createGain(), lp = AC.createBiquadFilter();
+      s.type = 'sawtooth'; s.frequency.value = fr; lp.type = 'lowpass';
+      lp.frequency.setValueAtTime(3200, t); lp.frequency.exponentialRampToValueAtTime(300, t+.9);
+      sg.gain.setValueAtTime(.07, t); sg.gain.exponentialRampToValueAtTime(.001, t+1.3); s.connect(lp).connect(sg).connect(m); s.start(t); s.stop(t+1.4);
+    });
+  },
+  whoosh(){
+    if(!SOUND || !AC) return; const t = AC.currentTime, m = out(.5);
+    const n = AC.createBufferSource(); n.buffer = noiseBuf(.5);
+    const f = AC.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = 1.4;
+    f.frequency.setValueAtTime(300, t); f.frequency.exponentialRampToValueAtTime(3200, t+.22); f.frequency.exponentialRampToValueAtTime(500, t+.45);
+    const g = AC.createGain(); g.gain.setValueAtTime(.001, t); g.gain.exponentialRampToValueAtTime(1, t+.2); g.gain.exponentialRampToValueAtTime(.001, t+.48);
+    n.connect(f).connect(g).connect(m); n.start(t);
+  },
+  crack(){
+    if(!SOUND || !AC) return; const t = AC.currentTime, m = out(.6);
+    for(let i=0;i<5;i++){ const n = AC.createBufferSource(); n.buffer = noiseBuf(.06); const f = AC.createBiquadFilter(); f.type='highpass'; f.frequency.value = 2500 + i*600;
+      const g = AC.createGain(); const st = t + i*.035; g.gain.setValueAtTime(.8, st); g.gain.exponentialRampToValueAtTime(.001, st+.05); n.connect(f).connect(g).connect(m); n.start(st); }
+  },
+  glass(){
+    if(!SOUND || !AC) return; const t = AC.currentTime, m = out(.45);
+    for(let i=0;i<26;i++){ const o = AC.createOscillator(), g = AC.createGain(); o.type = 'triangle'; o.frequency.value = 2200 + Math.random()*5200;
+      const st = t + Math.random()*.7; g.gain.setValueAtTime(.12, st); g.gain.exponentialRampToValueAtTime(.001, st+.12+Math.random()*.25); o.connect(g).connect(m); o.start(st); o.stop(st+.5); }
+    const n = AC.createBufferSource(); n.buffer = noiseBuf(.9); const f = AC.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 3000;
+    const g = AC.createGain(); g.gain.setValueAtTime(.5, t); g.gain.exponentialRampToValueAtTime(.001, t+.9); n.connect(f).connect(g).connect(m); n.start(t);
+  },
+  tick(){
+    if(!SOUND || !AC) return; const t = AC.currentTime, o = AC.createOscillator(), g = AC.createGain();
+    o.frequency.value = 2400; g.gain.setValueAtTime(.12, t); g.gain.exponentialRampToValueAtTime(.001, t+.06); o.connect(g).connect(out(1)); o.start(t); o.stop(t+.08);
+  }
+};
+
+/* ================= scroll stage: zoom into the fist, crack, shatter, reveal ================= */
+(function(){
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+  const stage = $('#top'), hero = $('#hero'), vid = hero.querySelector('video'), copy = hero.querySelector('.wrap'), hint = hero.querySelector('.scrollhint');
+  const cv = $('#shatter'), g = cv.getContext('2d');
+  const snap = document.createElement('canvas'), sg = snap.getContext('2d');
+  const poster = new Image(); poster.src = 'assets/hero-poster.jpg';
+  const ART_W = 1920, ART_H = 634, FIST_X = .795, FIST_Y = .70, ZOOM = 1.7;
+  const C = (v,a=0,b=1)=>Math.min(b,Math.max(a,v)), sg_ = (p,a,b)=>C((p-a)/(b-a));
+  const eio = t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2, eo = t=>1-Math.pow(1-t,3);
+  let Wd, Hd, dpr, fx, fy, box, shards = [], rings = [], state = 0, ticking = false;
+
+  function layout(){
+    dpr = Math.min(2, devicePixelRatio || 1); Wd = cv.clientWidth; Hd = cv.clientHeight;
+    cv.width = snap.width = Math.round(Wd*dpr); cv.height = snap.height = Math.round(Hd*dpr);
+    const bw = vid.offsetWidth, bh = vid.offsetHeight, s = Math.max(bw/ART_W, bh/ART_H), dw = ART_W*s, dh = ART_H*s;
+    const posX = innerWidth <= 700 ? .78 : 1, ox = (bw-dw)*posX, oy = (bh-dh)*.5;
+    box = {x: vid.offsetLeft + ox, y: vid.offsetTop + oy, w: dw, h: dh};
+    fx = C(box.x + FIST_X*dw, Wd*.15, Wd*.85); fy = C(box.y + FIST_Y*dh, Hd*.2, Hd*.85);
+    vid.style.setProperty('--fx', (fx - vid.offsetLeft) + 'px'); vid.style.setProperty('--fy', (fy - vid.offsetTop) + 'px');
+    build();
+  }
+  function build(){
+    let seed = 9; const r = ()=>((seed = (seed*1664525 + 1013904223) >>> 0) / 4294967296);
+    const D = Math.hypot(Wd, Hd), R = [0, .035, .09, .17, .28, .42, .6, .85, 1.25].map(f=>f*D), n = 15;
+    rings = R.map((rad,k)=>[...Array(n)].map((_,j)=>{ const a = (j + (k ? (r()-.5)*.6 : 0))/n*Math.PI*2, rr = k ? rad*(1+(r()-.5)*.25) : 0; return [fx + Math.cos(a)*rr, fy + Math.sin(a)*rr]; }));
+    shards = [];
+    for(let k=0;k<R.length-1;k++) for(let j=0;j<n;j++){
+      const pts = [rings[k][j], rings[k+1][j], rings[k+1][(j+1)%n], rings[k][(j+1)%n]];
+      const cx = pts.reduce((s,p)=>s+p[0],0)/4, cy = pts.reduce((s,p)=>s+p[1],0)/4, dx = cx-fx, dy = cy-fy, L = Math.hypot(dx,dy)||1;
+      shards.push({pts, cx, cy, ux: dx/L, uy: dy/L, sp: (.35 + r()*.75)*D*(1 - k*.05), rot: (r()-.5)*2.6, del: k*.035 + r()*.04, lift: (r()-.3)*.3*D});
+    }
+  }
+  function drawSnap(){
+    const src = vid.readyState >= 2 ? vid : (poster.complete ? poster : null);
+    sg.setTransform(dpr,0,0,dpr,0,0); sg.fillStyle = '#0b0a07'; sg.fillRect(0,0,Wd,Hd);
+    if(src){ sg.save(); sg.translate(fx,fy); sg.scale(ZOOM,ZOOM); sg.translate(-fx,-fy); sg.drawImage(src, box.x, box.y, box.w, box.h); sg.restore(); }
+    const gr = sg.createLinearGradient(0,0,Wd,0); gr.addColorStop(0,'rgba(11,10,7,.85)'); gr.addColorStop(.5,'rgba(11,10,7,.2)'); gr.addColorStop(1,'rgba(11,10,7,0)'); sg.fillStyle = gr; sg.fillRect(0,0,Wd,Hd);
+  }
+  function cracks(k){
+    g.save(); g.lineJoin = 'round'; g.lineCap = 'round';
+    g.shadowColor = '#ffc61a'; g.shadowBlur = 14; g.strokeStyle = 'rgba(255,252,235,.95)'; g.lineWidth = 2.2;
+    const reach = k*Math.hypot(Wd,Hd)*.75;
+    g.beginPath();
+    for(let j=0;j<rings[0].length;j++){
+      for(let q=0;q<rings.length-1;q++){
+        const a = rings[q][j], b = rings[q+1][j], da = Math.hypot(a[0]-fx,a[1]-fy), db = Math.hypot(b[0]-fx,b[1]-fy);
+        if(da > reach) break; const t = C((reach-da)/(db-da||1));
+        g.moveTo(a[0],a[1]); g.lineTo(a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t);
+      }
+    }
+    for(let q=1;q<rings.length-1;q++){
+      const rad = Math.hypot(rings[q][0][0]-fx, rings[q][0][1]-fy); if(rad > reach*.8) break;
+      for(let j=0;j<rings[q].length;j++){ const a = rings[q][j], b = rings[q][(j+1)%rings[q].length]; if((j*7+q)%3===0) continue; g.moveTo(a[0],a[1]); g.lineTo(b[0],b[1]); }
+    }
+    g.stroke();
+    const glow = g.createRadialGradient(fx,fy,0,fx,fy,120+k*220); glow.addColorStop(0,`rgba(255,240,150,${.55*k})`); glow.addColorStop(1,'rgba(255,240,150,0)');
+    g.shadowBlur = 0; g.fillStyle = glow; g.fillRect(0,0,Wd,Hd);
+    g.restore();
+  }
+  function shatter(s){
+    drawSnap();
+    for(const sh of shards){
+      const e = eo(sg_(s, sh.del, 1)), a = 1 - sg_(s, .5 + sh.del*.5, 1);
+      if(a <= 0) continue;
+      const tx = sh.ux*sh.sp*e, ty = sh.uy*sh.sp*e + (e*e)*.35*Hd - sh.lift*e;
+      g.save(); g.globalAlpha = a;
+      g.translate(sh.cx + tx, sh.cy + ty); g.rotate(sh.rot*e); const sc = 1 - .3*e; g.scale(sc, sc); g.translate(-sh.cx, -sh.cy);
+      g.beginPath(); sh.pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1])); g.closePath();
+      g.save(); g.clip(); g.drawImage(snap, 0, 0, Wd, Hd); g.restore();
+      g.strokeStyle = 'rgba(255,214,90,.9)'; g.lineWidth = 2; g.stroke();
+      g.restore();
+    }
+  }
+  function frame(){
+    ticking = false;
+    const span = stage.offsetHeight - innerHeight, p = C(-stage.getBoundingClientRect().top / (span || 1));
+    const z = eio(sg_(p, 0, .36));
+    vid.style.transform = `scale(${1 + z*(ZOOM-1)})`;
+    copy.style.transform = `translateX(${-z*80}vw) skewX(${-z*12}deg)`; copy.style.opacity = 1 - z*1.3;
+    hint.style.opacity = 1 - z*4;
+    g.setTransform(dpr,0,0,dpr,0,0); g.clearRect(0,0,Wd,Hd);
+    const ck = sg_(p, .34, .46);
+    if(p < .46){
+      hero.style.visibility = '';
+      if(ck > 0){ cracks(ck); const j = ck*7; hero.style.translate = `${(Math.random()-.5)*j}px ${(Math.random()-.5)*j}px`; } else hero.style.translate = '';
+      if(ck > 0 && state < 1){ state = 1; sfx.crack(); }
+      if(ck === 0) state = 0;
+    } else {
+      hero.style.visibility = 'hidden'; hero.style.translate = '';
+      if(state < 2){ state = 2; flash(); sfx.impact(); sfx.glass(); }
+      shatter(sg_(p, .46, .97));
+    }
+  }
+  const req = ()=>{ if(!ticking){ ticking = true; requestAnimationFrame(frame); } };
+  addEventListener('scroll', req, {passive:true});
+  addEventListener('resize', ()=>{ layout(); req(); });
+  vid.addEventListener('loadeddata', ()=>{ layout(); req(); });
+  layout(); req();
+})();
+
+/* ================= order form -> X ================= */
+(function(){
+  const opts = {
+    'o-type': ['Explainer', 'Launch / promo', 'Announcement', 'Event recap', 'Something else'],
+    'o-budget': ['Under $300', '$300–700', '$700–1,500', '$1,500+', "Let's talk"],
+    'o-time': ['This week', '1–2 weeks', '2–4 weeks', 'Flexible']
+  };
+  Object.entries(opts).forEach(([id, list])=>{
+    $('#'+id).innerHTML = list.map((v,i)=>`<input type="radio" name="${id}" id="${id}-${i}" value="${esc(v)}"><label for="${id}-${i}">${esc(v)}</label>`).join('');
+  });
+  const form = $('#brief'), prev = $('#f-prev'), err = $('#f-err');
+  const pick = n => { const el = form.querySelector(`[name="${n}"]:checked`); return el ? el.value : ''; };
+  const f = k => form.elements[k].value.trim();
+  const msg = () => ['Hey Master! Project brief from your site:', '',
+    `From: ${f('name') || '-'}`, `Project: ${f('proj') || '-'}`, `Need: ${pick('o-type') || '-'}`,
+    `Budget: ${pick('o-budget') || '-'}`, `Timeline: ${pick('o-time') || '-'}`, '', f('about') || '-'].join('\n');
+  const upd = () => { prev.textContent = msg(); };
+  form.addEventListener('input', upd); form.addEventListener('change', ()=>{ upd(); sfx.tick(); }); upd();
+  function toast(t){ const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('on'), 5000); }
+  function check(){
+    if(!pick('o-type') || !f('about')){ err.textContent = 'Pick what you need and write a line about the project, then send.'; return false; }
+    err.textContent = ''; return true;
+  }
+  form.addEventListener('submit', e=>{
+    e.preventDefault(); if(!check()) return;
+    const m = msg();
+    const copied = navigator.clipboard ? navigator.clipboard.writeText(m) : Promise.reject();
+    copied.then(()=>toast('Brief copied. On my X profile, tap Message and paste it.'))
+      .catch(()=>{ const r = document.createRange(); r.selectNodeContents(prev); const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+        toast('Copy the highlighted brief, then tap Message on my X profile.'); });
+    window.open('https://x.com/0xMASTER82', '_blank', 'noopener');
+    sfx.tick();
+  });
+  $('#f-post').addEventListener('click', ()=>{
+    if(!check()) return;
+    const t = `@0xMASTER82 I'd like a motion graphic: ${pick('o-type')}, budget ${pick('o-budget') || 'TBD'}, timeline ${pick('o-time') || 'flexible'}. ${f('about')}`.slice(0, 275);
+    window.open('https://x.com/intent/post?text=' + encodeURIComponent(t), '_blank', 'noopener');
+  });
+})();
+
 </script>
 </body>
 </html>
