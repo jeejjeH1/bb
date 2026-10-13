@@ -1,4 +1,4 @@
-"""Soundtrack for the AXIS Robotics 10s motion. 120 BPM, A minor. Synced to scene.html cuts.
+"""Soundtrack v2 for the AXIS Robotics 10s motion. 150 BPM, F# minor, hard-hitting. Synced to scene.html.
 Run: python3 audio.py -> soundtrack.wav"""
 import numpy as np, wave
 from scipy import signal as ss
@@ -6,10 +6,11 @@ from scipy import signal as ss
 SR = 44100
 DUR = 10.0
 N = int(SR * DUR)
-MIX = np.zeros((2, N)); REV = np.zeros(N); PAD = np.zeros((2, N))
-rng = np.random.default_rng(3)
-BEAT = 0.5
-CUTS = [2.0, 4.4, 6.0, 7.5, 8.8]
+B = 0.4
+rng = np.random.default_rng(11)
+MUS = np.zeros((2, N))   # music bus (filtered in the "simulation" section)
+SFX = np.zeros((2, N))   # hits / whooshes, unfiltered
+REV = np.zeros(N)
 
 def tt(d): return np.arange(int(SR * d)) / SR
 def noise(d): return rng.uniform(-1, 1, int(SR * d))
@@ -17,163 +18,196 @@ def filt(x, f, kind, order=2): return ss.sosfilt(ss.butter(order, f, kind, fs=SR
 def hz(n): return 440.0 * 2 ** ((n - 69) / 12)
 
 def add(sig, at, gain=1.0, pan=0.0, rev=0.0, bus=None):
-    i = int(at * SR)
-    if i >= N: return
+    bus = MUS if bus is None else bus
+    i = int(round(at * SR))
+    if i >= N or i < 0: return
     s = sig[: N - i] * gain
     lg, rg = np.cos((pan + 1) * np.pi / 4), np.sin((pan + 1) * np.pi / 4)
-    b = MIX if bus is None else bus
-    b[0, i:i + len(s)] += s * lg; b[1, i:i + len(s)] += s * rg
+    bus[0, i:i + len(s)] += s * lg; bus[1, i:i + len(s)] += s * rg
     if rev: REV[i:i + len(s)] += s * rev
 
 # ---------- instruments ----------
-def kick():
-    t = tt(.5); f = 45 + 130 * np.exp(-t / .03)
-    s = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / .2) + noise(.5) * np.exp(-t / .003) * .4
-    return np.tanh(2.4 * s) * .9
+def kick(hard=1.0):
+    t = tt(.45); f = 48 + 160 * np.exp(-t / .025)
+    s = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / .16)
+    s += filt(noise(.45), 3000, 'high') * np.exp(-t / .004) * .5
+    return np.tanh(3.0 * hard * s) * .95
 
-def hat(d=.05):
-    return filt(noise(d), 8000, 'high', 4) * np.exp(-tt(d) / (d / 3))
+def snare():
+    t = tt(.3)
+    body = np.sin(2 * np.pi * 200 * t) * np.exp(-t / .04)
+    sn = filt(noise(.3), [1500, 10000], 'band') * np.exp(-t / .09)
+    return np.tanh(2 * (body * .7 + sn))
 
-def clap():
-    out = np.zeros(int(SR * .35))
-    for d in (0, .01, .02):
-        i = int(d * SR); s = filt(noise(.35), [900, 4000], 'band') * np.exp(-tt(.35) / .05)
-        out[i:] += s[: len(out) - i]
-    return np.tanh(out * 1.5)
+def hat(d=.045, open_=False):
+    d = .2 if open_ else d
+    return filt(noise(d), 8000, 'high', 4) * np.exp(-tt(d) / (.06 if open_ else .012))
 
-def bass(n, d):
+def crash(d=1.6):
+    t = tt(d); return filt(noise(d), 5000, 'high') * np.exp(-t / .5) * .6
+
+def reese(n, d):
     t = tt(d); f = hz(n)
-    s = sum(np.sin(2 * np.pi * f * k * t) / k for k in range(1, 7))
-    s = filt(s, 700, 'low')
-    env = np.minimum(1, t / .005) * np.exp(-t / .25)
-    return np.tanh(1.8 * s * env) + np.sin(2 * np.pi * f / 2 * t) * env * .6
+    s = ss.sawtooth(2 * np.pi * f * t) + ss.sawtooth(2 * np.pi * f * 1.012 * t) + ss.sawtooth(2 * np.pi * f * .994 * t)
+    s = filt(s, 900, 'low', 3)
+    env = np.minimum(1, t / .004) * np.minimum(1, (d - t) / .01)
+    sub = np.sin(2 * np.pi * f / 2 * t) * env
+    return np.tanh(1.5 * s * env) * .7 + sub * .7
 
-def pluck(n, d=.3, bright=3000):
+def stab(notes, d=.18, bright=5000):
+    t = tt(d); s = np.zeros_like(t)
+    for n in notes:
+        for det in (-.15, 0, .15):
+            s += ss.sawtooth(2 * np.pi * hz(n + det) * t + rng.uniform(0, 6))
+    s = filt(s / (3 * len(notes)), bright, 'low', 2)
+    return np.tanh(2 * s) * np.exp(-t / .07)
+
+def pluck(n, d=.18, bright=3000):
     t = tt(d); f = hz(n)
-    s = ss.sawtooth(2 * np.pi * f * t) + ss.sawtooth(2 * np.pi * f * 1.007 * t)
-    return filt(s, bright, 'low') * np.exp(-t / .09) * .5
+    s = ss.square(2 * np.pi * f * t, .3) * .6 + ss.sawtooth(2 * np.pi * f * 1.005 * t) * .5
+    return filt(s, bright, 'low') * np.exp(-t / .05) * .55
 
 def pad(notes, d):
     t = tt(d); s = np.zeros_like(t)
     for n in notes:
-        for det in (-.12, 0, .12):
-            s += ss.sawtooth(2 * np.pi * hz(n + det / 12 * 1) * t + rng.uniform(0, 6))
-    s = filt(s, 1400, 'low', 3) / (len(notes) * 3)
-    return s * np.minimum(1, t / .4) * np.minimum(1, (d - t) / .4)
+        for det in (-.1, 0, .1):
+            s += ss.sawtooth(2 * np.pi * hz(n + det) * t + rng.uniform(0, 6))
+    return filt(s / (3 * len(notes)), 2000, 'low', 3) * np.minimum(1, t / .05) * np.exp(-t / 1.0)
 
-def whoosh(d, up=True):
-    t = tt(d); x = noise(d); out = np.zeros_like(x); hop = 512
-    for i in range(0, len(x), hop):
-        p = i / len(x); fc = 300 * (40 ** (p if up else 1 - p))
+def sweep(d, up=True, lo=200, hi=9000):
+    x = noise(d); out = np.zeros_like(x); hop = 256; n = len(x)
+    for i in range(0, n, hop):
+        p = i / n; p = p if up else 1 - p
+        fc = lo * (hi / lo) ** p
         seg = x[max(0, i - 2048): i + hop]
-        out[i:i + hop] = filt(seg, [fc, min(fc * 2.2, 20000)], 'band')[-len(out[i:i + hop]):]
-    env = (t / d) ** 2 if up else np.exp(-t / (d / 4))
-    return out * env * 2
+        o = filt(seg, [fc, min(fc * 1.8, 20000)], 'band')
+        out[i:i + hop] = o[-len(out[i:i + hop]):]
+    t = tt(d)
+    env = (t / d) ** 2.5 if up else np.exp(-t / (d / 4))
+    return out * env * 3
 
-def impact():
-    t = tt(1.6); f = 32 + 90 * np.exp(-t / .05)
-    boom = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / .5)
-    crack = filt(noise(1.6), 2500, 'high') * np.exp(-t / .04)
-    return np.tanh(2 * boom) * .9 + crack * .5
+def riser(d, n0=54, n1=78):
+    t = tt(d); f = hz(n0) * (hz(n1) / hz(n0)) ** (t / d)
+    s = ss.sawtooth(2 * np.pi * np.cumsum(f) / SR) + ss.sawtooth(2 * np.pi * np.cumsum(f * 1.01) / SR)
+    return filt(s, 4000, 'low') * (t / d) ** 2 * .35
 
-def blip(n, d=.12):
-    t = tt(d); return np.sin(2 * np.pi * hz(n) * t) * np.exp(-t / .03)
+def impact(big=1.0):
+    d = 2.0; t = tt(d); f = 30 + 110 * np.exp(-t / .06)
+    boom = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / (.45 * big))
+    crack = filt(noise(d), 1800, 'high') * np.exp(-t / .05)
+    body = filt(noise(d), [80, 600], 'band') * np.exp(-t / .12)
+    return np.tanh(2.2 * boom) * .9 + crack * .55 + body * .8
 
-def tick():
-    t = tt(.03); return filt(noise(.03), 3000, 'high') * np.exp(-t / .004)
+def slash(d=.25):
+    return sweep(d, up=False, lo=600, hi=12000)
 
-def shimmer(d=2.0):
-    t = tt(d); s = np.zeros_like(t)
-    for n in (81, 84, 88, 93):
-        s += np.sin(2 * np.pi * hz(n) * t + rng.uniform(0, 6)) * (1 + .3 * np.sin(2 * np.pi * 6 * t))
-    return s / 4 * np.minimum(1, t / .01) * np.exp(-t / .6)
+def blip(n, d=.1):
+    t = tt(d); return np.sin(2 * np.pi * hz(n) * t) * np.exp(-t / .025)
 
-# ---------- arrangement ----------
-# intro: riser into logo burst, rays tick out, wordmark settles
-add(whoosh(.35), 0, .35, rev=.2)
-add(impact(), .15, .75, rev=.25)
-add(shimmer(), .2, .25, rev=.6)
-for i in range(16):
-    add(tick(), .1 + i * .03, .25, pan=np.sin(i * 1.7) * .8, rev=.2)
-add(blip(76, .3), .85, .18, rev=.5)   # wordmark
-add(blip(81, .3), 1.25, .14, rev=.5)  # tagline
-add(whoosh(.6), 1.4, .45, rev=.3)     # riser into cut 1
+def fall(n0, n1, d=.12):
+    t = tt(d); f = hz(n0) * (hz(n1) / hz(n0)) ** (t / d)
+    return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / .05)
 
-# harmony: Am - F - C - G (2 beats each), pad sidechained
-chords = [[57, 60, 64], [53, 57, 60], [48, 52, 55], [55, 59, 62]]
-roots = [45, 41, 48, 43]
-t0 = 0.0; ci = 0
-while t0 < DUR:
-    add(pad(chords[ci % 4], 1.0 + .4), t0, .35, rev=.3, bus=PAD)
-    t0 += 1.0; ci += 1
+# F#m - D - A - E (one bar = 4 beats = 1.6s; we change every 2 beats for energy)
+CH = [[54, 57, 61], [50, 54, 57], [57, 61, 64], [52, 56, 59]]
+ROOT = [30, 26, 33, 28]
+def chord_at(t): return int(t / (2 * B)) % 4
 
-# arp (16ths) filtered in intro, open later
-arp = [69, 72, 76, 72, 69, 76, 79, 76]
-for k in range(int(DUR / (BEAT / 4))):
-    t = k * BEAT / 4
-    if t >= 9.5: break
-    c = chords[int(t) % 4]
-    n = c[k % 3] + 12 + (12 if k % 8 == 6 else 0)
-    bright = 900 if t < 2 else (2200 if t < 6 else 4200)
-    if t >= 8.8: bright = 1500
-    add(pluck(n, .25, bright), t, .22 if t >= 2 else .14, pan=.35 * np.sin(k), rev=.25)
+# ---------- 0–0.4: intro riser ----------
+add(sweep(.4, True), 0, .5, bus=SFX)
+add(riser(.4, 42, 78), 0, .8, rev=.2)
+for i in range(8): add(snare(), i * .05, .15 + i * .05)
 
-# drums + bass 2.0 -> 8.8
-k = 0; t = 2.0
-while t < 8.8 - 1e-6:
-    add(kick(), t, .9)
-    add(hat(), t + BEAT / 2, .25, pan=.3)
-    add(hat(.03), t + BEAT * .75, .12, pan=-.3)
-    if k % 2 == 1: add(clap(), t, .35, rev=.3)
-    r = roots[int(t) % 4]
-    add(bass(r, BEAT * .45), t + BEAT / 2, .35)
-    add(bass(r, BEAT * .2), t + BEAT * .75, .2)
-    t += BEAT; k += 1
-# build fill before finale
-for i in range(8):
-    add(hat(.04), 8.4 + i * .05, .2 + i * .03, pan=(-1) ** i * .4)
+# ---------- groove 0.4 -> 7.6 ----------
+t = .4; k = 0
+while t < 7.6 - 1e-6:
+    add(kick(), t, .95)
+    if k % 2 == 1: add(snare(), t, .5, rev=.25)
+    for j in range(4):
+        add(hat(), t + j * B / 4, .18 if j % 2 else .1, pan=.3 * (-1) ** j)
+    add(hat(open_=True), t + B / 2, .14, pan=-.2)
+    r = ROOT[chord_at(t)]
+    add(reese(r, B * .42), t + B / 2, .42)
+    add(reese(r, B * .18), t + B * .75, .25)
+    t += B; k += 1
 
-# per-cut whoosh + hit
-for c in CUTS:
-    add(whoosh(.45), c - .45, .4, rev=.2)
-    add(impact(), c, .35 if c != 8.8 else .95, rev=.3)
+# arp 16ths 0.4->7.6, brightness rises
+for i in range(int((7.6 - .4) / (B / 4))):
+    tm = .4 + i * B / 4
+    c = CH[chord_at(tm)]
+    n = c[i % 3] + 12 + (12 if i % 8 in (3, 7) else 0)
+    bright = 1500 + 3500 * min(1, (tm - .4) / 5)
+    add(pluck(n, .16, bright), tm, .24, pan=.4 * np.sin(i * 1.3), rev=.15)
 
-# word reveals (scene 2) and grid pops (scene 3)
-for i in range(13): add(tick(), 2.2 + i * .09, .18, pan=-.6 + i * .1)
-for i in range(0, 40, 3): add(blip(84 + (i % 5) * 2, .06), 4.55 + i * .018, .06, pan=.5)
-# loop scene: node pops + highlight blips
-for i in range(4): add(blip(72 + [0, 3, 7, 12][i], .15), 6.1 + i * .18, .16, rev=.3)
-for j in range(4): add(blip(88, .08), 6.8 + j / 2.2, .1, pan=.4, rev=.4)
-# sim->real badges
-add(blip(79, .15), 8.0, .16, rev=.3); add(blip(83, .15), 8.3, .16, rev=.3)
-# finale: shimmer + URL pop
-add(shimmer(1.2), 8.8, .35, rev=.7)
-add(pad([45, 57, 64, 69, 72], 1.2), 8.8, .4, rev=.6)
-add(blip(81, .25), 9.5, .25, rev=.5); add(blip(88, .25), 9.55, .15, rev=.5)
+# ---------- hits & sfx ----------
+add(impact(1.3), .4, 1.0, rev=.3, bus=SFX); add(crash(), .4, .5, bus=SFX)
+add(sweep(.35, True), .85, .3, bus=SFX)
+for i in range(13): add(blip(78 + i, .05), .7 + i * .025, .08, pan=-.6 + i * .1, bus=SFX)   # wordmark letters
+add(impact(.6), 1.2, .55, bus=SFX); add(stab(CH[0], .25), 1.2, .45, rev=.3)              # BIGGER
+add(impact(.6), 1.38, .55, bus=SFX); add(stab(CH[1], .25), 1.38, .45, rev=.3)            # MODELS?
+add(slash(.3), 1.6, .7, bus=SFX); add(impact(.8), 1.6, .6, bus=SFX)                       # strike
+add(sweep(.35, True), 1.65, .4, bus=SFX)
+add(impact(1.0), 2.0, .8, rev=.3, bus=SFX); add(crash(), 2.0, .4, bus=SFX)              # BETTER DATA
+for i in range(11): add(fall(96 - i, 60, .1), 2.0 + i * .025 + (.2 if i >= 6 else 0), .08, pan=-.5 + i * .1, bus=SFX)
+for i, c in enumerate([2.8, 3.0, 3.2, 3.4]):                                               # strobe
+    add(stab([n + 12 + i * 2 for n in CH[i % 4]], .18, 7000), c, .55, rev=.2)
+    add(impact(.4), c, .35, bus=SFX)
+add(sweep(.3, True), 3.3, .4, bus=SFX)
+add(impact(1.0), 3.6, .7, rev=.3, bus=SFX); add(crash(), 3.6, .35, bus=SFX)              # engine
+for i in range(5): add(blip(73 + [0, 2, 4, 7, 12][i], .14), 3.6 + i * .32, .25, rev=.4, bus=SFX)
+add(sweep(.4, True), 4.8, .4, bus=SFX)
+add(impact(.8), 5.2, .5, bus=SFX)                                                          # simulation
+add(sweep(.25, True), 5.55, .5, bus=SFX)
+add(impact(1.2), 5.8, .9, rev=.3, bus=SFX); add(crash(), 5.8, .5, bus=SFX); add(slash(.3), 5.8, .5, bus=SFX)  # REALITY
+add(impact(.7), 6.4, .55, bus=SFX)                                                         # marquee
+add(stab([66, 69, 73, 78], .3, 6000), 6.65, .5, rev=.3)                                     # box pop
 
-# ---------- sidechain pad bus ----------
+# ---------- 7.6–8.4 build ----------
+times = []; tm = 7.6; step = B / 2
+while tm < 8.3:
+    times.append(tm); tm += step; step = max(.03, step * .8)
+for i, tm in enumerate(times): add(snare(), tm, .25 + .5 * i / len(times), rev=.1)
+add(riser(.7, 54, 90), 7.6, 1.0, rev=.2)
+add(sweep(.7, True, 150, 14000), 7.6, .7, bus=SFX)
+for i in range(4): add(kick(.6), 7.6 + i * .1, .3)
+
+# ---------- 8.4 finale ----------
+add(impact(2.0), 8.4, 1.2, rev=.5, bus=SFX); add(crash(2.0), 8.4, .7, bus=SFX)
+add(pad([42, 54, 57, 61, 66, 69], 1.6), 8.4, .7, rev=.5)
+for i, tm in enumerate([8.4, 8.8, 9.2, 9.6]):
+    add(kick(.9), tm, .8 if i else 0)
+    add(reese(30, B * .9), tm, .35 if i < 3 else .2)
+    add(hat(open_=True), tm + B / 2, .12)
+for i in range(8): add(blip(78 + (i % 4) * 3, .05), 8.52 + i * .03, .06, pan=.5, bus=SFX)  # wordmark
+add(blip(85, .2), 9.05, .2, rev=.5, bus=SFX); add(blip(90, .2), 9.1, .12, rev=.5, bus=SFX)  # URL
+
+# ---------- automation: kick sidechain on music, lowpass during "simulation" ----------
 sc = np.ones(N)
-t = 2.0
-while t < 8.8:
-    i = int(t * SR); d = tt(BEAT); g = 1 - .75 * np.exp(-d / .09)
-    sc[i:i + len(g)] = np.minimum(sc[i:i + len(g)], g[: N - i]); t += BEAT
-MIX += PAD * sc
+for tm in np.arange(.4, 7.6, B):
+    i = int(tm * SR); g = 1 - .55 * np.exp(-tt(B) / .07)
+    sc[i:i + len(g)] = np.minimum(sc[i:i + len(g)], g[: N - i])
+a, b = int(5.2 * SR), int(5.8 * SR)
+low = np.stack([filt(MUS[ch, a - 2048:b], 700, 'low', 4)[2048:] for ch in (0, 1)])
+xf = np.ones(b - a); r = int(.02 * SR); xf[:r] = np.linspace(0, 1, r); xf[-r:] = np.linspace(1, 0, r)
+MUS[:, a:b] = MUS[:, a:b] * (1 - xf) + low * xf * 1.3
+# gap of silence right before the drop
+g0, g1 = int(8.32 * SR), int(8.4 * SR)
+MUS[:, g0:g1] *= np.linspace(1, 0, g1 - g0) ** 3
+MIX = MUS * np.minimum(1, sc + .0) + SFX
 
 # ---------- reverb ----------
-ir_t = tt(1.8)
+ir_t = tt(1.6)
 for ch, seed in ((0, 1), (1, 2)):
-    ir = np.random.default_rng(seed).standard_normal(len(ir_t)) * np.exp(-ir_t / .45)
-    ir = filt(ir, 6000, 'low')
-    wet = ss.fftconvolve(filt(REV, 200, 'high'), ir)[:N]
-    MIX[ch] += wet / np.max(np.abs(ir)) * .02
+    ir = np.random.default_rng(seed).standard_normal(len(ir_t)) * np.exp(-ir_t / .4)
+    wet = ss.fftconvolve(filt(REV, 250, 'high'), filt(ir, 6000, 'low'))[:N]
+    MIX[ch] += wet / np.max(np.abs(ir)) * .018
 
 # ---------- master ----------
-MIX = filt(MIX, 25, 'high')
-fade = np.ones(N); f0 = int(9.6 * SR); fade[f0:] = np.linspace(1, 0, N - f0) ** 1.5
-MIX *= fade
-MIX = np.tanh(MIX * 1.2)
-MIX /= np.max(np.abs(MIX)) / .89
+MIX = filt(MIX, 28, 'high')
+f0 = int(9.75 * SR); MIX[:, f0:] *= np.linspace(1, 0, N - f0) ** 1.5
+MIX = np.tanh(MIX * 1.4) / np.tanh(1.4)
+MIX /= np.max(np.abs(MIX)) / .9
 pcm = (MIX.T * 32767).astype(np.int16)
 with wave.open('soundtrack.wav', 'wb') as w:
     w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR); w.writeframes(pcm.tobytes())
-print('ok', MIX.shape)
+print('ok')

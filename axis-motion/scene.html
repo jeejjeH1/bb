@@ -1,106 +1,189 @@
 <!doctype html><html><head><meta charset="utf-8"><style>
-:root{--g:#0BB037;--k:#000;--w:#fff}
+@font-face{font-family:Anton;src:url(anton.woff2)}
+@font-face{font-family:JBM;src:url(jbm.woff2)}
+:root{--g:#0BB037}
 *{margin:0;box-sizing:border-box}
-html,body{width:1920px;height:1080px;overflow:hidden;background:#000;font-family:'Inter Display','Inter',sans-serif;color:#fff}
-#stage{position:relative;width:1920px;height:1080px;overflow:hidden}
-.sc{position:absolute;inset:0;opacity:0}
-.abs{position:absolute}
-.h1{font-weight:800;letter-spacing:-.035em;line-height:1.02}
-.g{color:var(--g)}
-.tag{font-weight:600;letter-spacing:.22em;font-size:26px;color:var(--g);text-transform:uppercase}
-.word{display:inline-block;will-change:transform,opacity}
-.node{position:absolute;width:300px;height:92px;border:3px solid #fff;border-radius:46px;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:32px;background:#000}
-.badge{position:absolute;font-weight:700;font-size:34px;padding:16px 34px;border-radius:50px}
-</style></head><body><div id="stage">
-<canvas id="bg" width="1920" height="1080" class="abs" style="left:0;top:0"></canvas>
-<div id="s1" class="sc"></div><div id="s2" class="sc"></div><div id="s3" class="sc"></div>
-<div id="s4" class="sc"></div><div id="s5" class="sc"></div><div id="s6" class="sc"></div>
-<div id="flash" class="abs" style="inset:0;background:#0BB037;opacity:0"></div>
-<div id="bar" class="abs" style="left:0;bottom:0;height:8px;background:#0BB037;width:0"></div>
+html,body{width:1920px;height:1080px;overflow:hidden;background:#000;color:#fff;font-family:'Inter Display',Inter,sans-serif}
+#root{position:relative;width:1920px;height:1080px;overflow:hidden;background:#000}
+#cam{position:absolute;inset:0;transform-origin:50% 50%}
+.sc{position:absolute;inset:0;display:none;overflow:hidden}
+.a{position:absolute}
+.mega{font-family:Anton;text-transform:uppercase;line-height:.86;letter-spacing:-.005em}
+.lbl{font-family:JBM;font-size:24px;letter-spacing:.18em;text-transform:uppercase;color:var(--g)}
+.ch{display:inline-block}
+.full{inset:0}
+.center{display:flex;align-items:center;justify-content:center;text-align:center}
+.mq{white-space:nowrap;font-family:Anton;font-size:190px;line-height:1;text-transform:uppercase}
+.out{color:transparent;-webkit-text-stroke:3px #fff}
+.outg{color:transparent;-webkit-text-stroke:3px #0BB037}
+</style></head><body><div id="root">
+<div id="cam">
+ <canvas id="bg" class="a" width="1920" height="1080" style="left:0;top:0"></canvas>
+ <div id="S0" class="sc"></div><div id="S1" class="sc"></div><div id="S2" class="sc"></div><div id="S3" class="sc"></div>
+ <div id="S4" class="sc"></div><div id="S5" class="sc"></div><div id="S6" class="sc"></div><div id="S7" class="sc"></div>
+ <div id="S8" class="sc"></div><div id="S9" class="sc"></div>
+</div>
+<canvas id="fx" class="a" width="1920" height="1080" style="left:0;top:0;pointer-events:none"></canvas>
+<div id="flash" class="a full" style="background:#fff;opacity:0"></div>
+<div id="hud" class="a" style="left:48px;top:40px;right:48px;display:flex;justify-content:space-between" >
+ <span class="lbl" id="hudL" style="color:#fff;opacity:.7">AXIS/ROBOTICS</span><span class="lbl" id="hudR" style="opacity:.9">00:00</span></div>
+<div id="bar" class="a" style="left:0;bottom:0;height:6px;background:#0BB037"></div>
 </div>
 <script>
-const $=id=>document.getElementById(id);
+const $=id=>document.getElementById(id), Q=(s,el=document)=>[...el.querySelectorAll(s)];
 const cl=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
-const eo=x=>1-Math.pow(1-cl(x),4), eio=x=>{x=cl(x);return x<.5?8*x**4:1-Math.pow(-2*x+2,4)/2};
-const eb=x=>{x=cl(x);const c=1.9;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
 const seg=(t,a,d)=>cl((t-a)/d);
-// logo svg
+const eo=x=>1-Math.pow(1-cl(x),5), ei=x=>Math.pow(cl(x),4);
+const eio=x=>{x=cl(x);return x<.5?16*x**5:1-Math.pow(-2*x+2,5)/2};
+const eb=x=>{x=cl(x);const c=2.2;return 1+(c+1)*Math.pow(x-1,3)+c*Math.pow(x-1,2)};
+const B=0.4; // 150 BPM
+const G='#0BB037';
+function rnd(s){s=Math.sin(s*127.1+311.7)*43758.5453;return s-Math.floor(s)}
+function chars(txt,cls=''){return [...txt].map(c=>`<span class="ch ${cls}">${c===' '?'&nbsp;':c}</span>`).join('')}
+
+// ---------- logo ----------
 const RAYS=[[90,40,5],[270,40,5],[0,40,5],[180,40,5],[135,34,4],[45,31,4],[225,34,4],[315,36,4],[112,32,3],[158,30,3],[68,30,3],[22,31,3],[202,30,3],[248,32,3],[292,31,3],[338,30,3]];
-function logo(size,color,id,prog){ // prog 0..1 ray growth
- let s=`<svg id="${id}" width="${size}" height="${size}" viewBox="0 0 100 100" style="overflow:visible">`;
- RAYS.forEach(([a,l,w],i)=>{const L=l*prog;s+=`<line x1="50" y1="50" x2="${50+Math.cos(a*Math.PI/180)*(14+L)}" y2="${50-Math.sin(a*Math.PI/180)*(14+L)}" stroke="${color}" stroke-width="${w}" stroke-linecap="butt"/>`});
- return s+`<circle cx="50" cy="50" r="17" fill="${color}"/></svg>`}
-// bg
-const bg=$('bg').getContext('2d');
-function drawBg(t){bg.fillStyle='#000';bg.fillRect(0,0,1920,1080);
- const off=(t*40)%80;bg.strokeStyle='rgba(11,176,55,.10)';bg.lineWidth=1;
- for(let x=-80+off;x<1920;x+=80){bg.beginPath();bg.moveTo(x,0);bg.lineTo(x,1080);bg.stroke()}
- for(let y=-80+off;y<1080;y+=80){bg.beginPath();bg.moveTo(0,y);bg.lineTo(1920,y);bg.stroke()}
- const g=bg.createRadialGradient(960,540,0,960,540,900);g.addColorStop(0,'rgba(11,176,55,.10)');g.addColorStop(1,'rgba(0,0,0,0)');bg.fillStyle=g;bg.fillRect(0,0,1920,1080);
- const y=((t*300)%1400)-160;const l=bg.createLinearGradient(0,y-80,0,y+80);l.addColorStop(0,'rgba(11,176,55,0)');l.addColorStop(.5,'rgba(11,176,55,.07)');l.addColorStop(1,'rgba(11,176,55,0)');bg.fillStyle=l;bg.fillRect(0,y-80,1920,160)}
-// helpers
-function words(txt,cls,style){return txt.split(' ').map(w=>`<span class="word ${cls?'':''}" style="${style||''}">${w}</span>`).join(' ')}
-// ---- scenes
-$('s1').innerHTML=`<div class="abs" id="lg" style="left:810px;top:290px"></div>
-<div class="abs h1" id="wm" style="left:0;width:1920px;top:700px;text-align:center;font-size:96px;letter-spacing:.12em;font-weight:700">AXIS ROBOTICS</div>
-<div class="abs tag" id="wm2" style="left:0;width:1920px;top:830px;text-align:center">Infrastructure for Physical AI</div>`;
-$('s2').innerHTML=`<div class="abs tag" style="left:140px;top:210px">01 — The thesis</div>
-<div class="abs h1" id="h2" style="left:140px;top:290px;width:1640px;font-size:132px">${words('The next robotics breakthrough might not come from bigger models.')}<br><span class="g">${words('It might come from better data.')}</span></div>`;
-// scene3: diversity grid
-let g3='';for(let i=0;i<40;i++){const r=i%5,c=(i/5|0);g3+=`<div class="abs gi" style="left:${1000+r*150}px;top:${230+c*84}px;width:110px;height:56px;border-radius:${[28,6,28,6,16][(i*7)%5]}px;border:3px solid ${i%7==0?'#0BB037':'#fff'};background:${i%7==0?'#0BB037':'transparent'}"></div>`}
-$('s3').innerHTML=`<div class="abs tag" style="left:140px;top:210px">02 — The data bottleneck</div>
-<div class="abs h1" id="h3" style="left:140px;top:290px;width:800px;font-size:100px">${words('Robots ace demos.')}<br><span class="g">${words('Reality is messier.')}</span></div>
-<div class="abs" id="p3" style="left:140px;top:640px;width:760px;font-size:44px;line-height:1.3;font-weight:500;color:#cfcfcf">Different objects. Different places. Unexpected situations.</div>${g3}`;
-// scene4: loop
-const steps=['Generate tasks','Collect demos','Train models','Analyze failures'];
-const P=[[960,250],[1360,540],[960,830],[560,540]];
-let n4='';steps.forEach((s,i)=>{n4+=`<div class="node n4" style="left:${P[i][0]-150}px;top:${P[i][1]-46}px">${s}</div>`});
-$('s4').innerHTML=`<div class="abs tag" style="left:140px;top:140px">03 — The compounding data engine</div>
-<svg class="abs" width="1920" height="1080" style="left:0;top:0"><ellipse id="ring" cx="960" cy="540" rx="400" ry="290" fill="none" stroke="#0BB037" stroke-width="4" stroke-dasharray="14 12"/><circle id="dot" r="16" fill="#0BB037"/></svg>${n4}
-<div class="abs" id="lp" style="left:810px;top:420px;width:300px;text-align:center"></div>
-<div class="abs h1" id="rp" style="left:660px;top:600px;width:600px;text-align:center;font-size:44px;color:#0BB037">Repeat ↻</div>`;
-// scene5: sim to real
-$('s5').innerHTML=`<div class="abs tag" style="left:140px;top:210px">04 — Simulation → Reality</div>
-<div class="abs h1" id="h5" style="left:140px;top:290px;width:1640px;font-size:112px">${words('Success in sim')}<br><span class="g">${words("isn't success in the real world.")}</span></div>
-<div class="badge" id="b1" style="left:140px;top:760px;background:#0BB037;color:#000">Browser simulation</div>
-<div class="abs" id="arr" style="left:600px;top:775px;font-size:60px;font-weight:700">→</div>
-<div class="badge" id="b2" style="left:720px;top:760px;border:3px solid #fff">Physics · friction · perception · hardware</div>`;
-$('s6').innerHTML=`<div class="abs" id="lg6" style="left:100px;top:160px"></div>
-<div class="abs h1" id="h6" style="left:100px;top:600px;width:1720px;text-align:center;font-size:128px">${words('Data is the')} <span class="g">${words('bottleneck.')}</span></div>
-<div class="abs" id="q6" style="left:100px;top:790px;width:1720px;text-align:center;font-size:44px;font-weight:500;color:#cfcfcf">Data · Compute · Real-world generalization — which one?</div>
-<div class="abs" id="u6" style="left:660px;top:900px;width:600px;text-align:center;font-size:42px;font-weight:700;background:#0BB037;color:#000;border-radius:60px;padding:18px 0">axisrobotics.ai</div>`;
-$('lg').innerHTML=logo(300,'#fff','lgs',0);$('lg6').innerHTML=logo(170,'#0BB037','lgs6',1);
-$('lg6').style.left='875px';$('lg6').style.top='400px';
-const T=[[0,2.2],[2.0,4.6],[4.4,6.2],[6.0,7.7],[7.5,9.0],[8.8,10]];
-function fade(el,t,a,b,dx=0,dy=0){const i=eo(seg(t,a,.45)),o=1-eio(seg(t,b-.4,.4));const v=Math.min(i,o);el.style.opacity=v;el.style.transform=`translate(${dx*(1-v)}px,${dy*(1-v)}px)`}
-function stagger(el,t,a,gap=.08,rise=60){[...el.querySelectorAll('.word')].forEach((w,i)=>{const p=eb(seg(t,a+i*gap,.55));w.style.opacity=cl(p*2);w.style.transform=`translateY(${(1-p)*rise}px)`})}
-function render(t){drawBg(t);
- [1,2,3,4,5,6].forEach((n,i)=>{const [a,b]=T[i];const el=$('s'+n);el.style.display=(t>=a-.01&&t<=b+.01)?'block':'none'});
- // s1
- let l=t;if(t<2.3){const sv=$('lgs');const p=eo(seg(l,.1,.9));sv.querySelectorAll('line').forEach((ln,i)=>{const [a,len]=RAYS[i];const L=len*cl(eb(seg(l,.1+i*.03,.7)),0,1.15);ln.setAttribute('x2',50+Math.cos(a*Math.PI/180)*(14+L));ln.setAttribute('y2',50-Math.sin(a*Math.PI/180)*(14+L))});
-  sv.style.transform=`rotate(${(1-p)*-180}deg) scale(${.2+.8*p+(l>1.2?Math.sin(seg(l,1.2,.5)*Math.PI)*.08:0)})`;sv.style.opacity=cl(p*3);
-  $('wm').style.opacity=eo(seg(l,.8,.5));$('wm').style.transform=`translateY(${(1-eo(seg(l,.8,.5)))*40}px)`;$('wm').style.letterSpacing=(.4-.28*eo(seg(l,.8,.9)))+'em';
-  $('wm2').style.opacity=eo(seg(l,1.2,.5));
-  $('s1').style.opacity=1-eio(seg(t,1.8,.4));}
- // s2
- if(t>=2){const lt=t-2.0;$('s2').style.opacity=Math.min(1,eo(seg(lt,0,.2)))*(1-eio(seg(t,4.2,.4)));stagger($('h2'),lt,.2,.09,70);}
- // s3
- if(t>=4.4&&t<=6.25){const lt=t-4.4;$('s3').style.opacity=Math.min(eo(seg(lt,0,.2)),1-eio(seg(t,5.85,.4)));stagger($('h3'),lt,.1,.08,60);$('p3').style.opacity=eo(seg(lt,.7,.4));
-  document.querySelectorAll('.gi').forEach((e,i)=>{const p=eb(seg(lt,.15+i*.018,.45));e.style.opacity=cl(p*2);e.style.transform=`scale(${p}) rotate(${(1-p)*40}deg)`})}
- // s4
- if(t>=6&&t<=7.75){const lt=t-6;$('s4').style.opacity=Math.min(eo(seg(lt,0,.2)),1-eio(seg(t,7.35,.4)));
-  document.querySelectorAll('.n4').forEach((e,i)=>{const p=eb(seg(lt,.1+i*.18,.45));e.style.opacity=cl(p*2);e.style.transform=`scale(${p})`;const on=((lt*2.2)|0)%4===i&&lt>.8;e.style.background=on?'#0BB037':'#000';e.style.color=on?'#000':'#fff';e.style.borderColor=on?'#0BB037':'#fff'});
-  const ang=lt*Math.PI*2*1.1-Math.PI/2;$('dot').setAttribute('cx',960+400*Math.cos(ang));$('dot').setAttribute('cy',540+290*Math.sin(ang));
-  $('ring').style.opacity=eo(seg(lt,0,.5));$('rp').style.opacity=eo(seg(lt,.9,.4));
-  $('lp').innerHTML='';}
- // s5
- if(t>=7.5&&t<=9.05){const lt=t-7.5;$('s5').style.opacity=Math.min(eo(seg(lt,0,.2)),1-eio(seg(t,8.65,.4)));stagger($('h5'),lt,.05,.07,50);
-  const b1=eb(seg(lt,.5,.5)),b2=eb(seg(lt,.8,.5));$('b1').style.opacity=cl(b1);$('b1').style.transform=`scale(${b1})`;$('b2').style.opacity=cl(b2);$('b2').style.transform=`scale(${b2})`;$('arr').style.opacity=eo(seg(lt,.7,.3));$('arr').style.left=(600+Math.sin(lt*10)*10)+'px';
-  $('b1').style.left='140px';$('arr').style.left=(560+Math.sin(lt*10)*10)+'px';$('b2').style.left='680px'}
- // s6
- if(t>=8.8){const lt=t-8.8;$('s6').style.opacity=eo(seg(lt,0,.3));const p=eb(seg(lt,0,.5));$('lg6').style.transform=`scale(${p}) rotate(${t*60}deg)`;stagger($('h6'),lt,.15,.08,50);$('q6').style.opacity=eo(seg(lt,.55,.3));const u=eb(seg(lt,.7,.4));$('u6').style.opacity=cl(u);$('u6').style.transform=`scale(${u})`}
- // flashes at transitions
- const fl=[2.0,4.4,6.0,7.5,8.8].reduce((m,x)=>Math.max(m,Math.max(0,1-Math.abs(t-x-.1)/.12)*.35),0);$('flash').style.opacity=fl;
- $('bar').style.width=(t/10*1920)+'px';}
-window.render=render;render(0);
+function logoSVG(color){let s=`<svg viewBox="0 0 100 100" width="100%" height="100%" style="overflow:visible">`;
+ RAYS.forEach(([a,l,w])=>{s+=`<line class="ray" data-a="${a}" data-l="${l}" x1="50" y1="50" x2="50" y2="50" stroke="${color}" stroke-width="${w}"/>`});
+ return s+`<circle class="core" cx="50" cy="50" r="17" fill="${color}"/></svg>`}
+function setRays(root,p,wob=0,t=0){Q('.ray',root).forEach((ln,i)=>{const a=+ln.dataset.a*Math.PI/180,l=+ln.dataset.l;
+ const L=14+l*cl(typeof p==='function'?p(i):p,0,1.3)*(1+wob*Math.sin(t*20+i));ln.setAttribute('x2',50+Math.cos(a)*L);ln.setAttribute('y2',50-Math.sin(a)*L)})}
+
+// ---------- background canvas ----------
+const bg=$('bg').getContext('2d'), fx=$('fx').getContext('2d');
+const grains=[];for(let k=0;k<6;k++){const c=document.createElement('canvas');c.width=480;c.height=270;const x=c.getContext('2d');const d=x.createImageData(480,270);
+ for(let i=0;i<d.data.length;i+=4){const v=Math.random()*255;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=12}x.putImageData(d,0,0);grains.push(c)}
+
+// ---------- scenes ----------
+// S0 0–0.4: slices
+$('S0').innerHTML=[0,1,2,3,4].map(i=>`<div class="a sl" style="left:0;top:${i*216}px;height:216px;width:1920px;background:${i%2?'#fff':G}"></div>`).join('')+
+ `<div class="a full center mega" id="s0t" style="font-size:340px;color:#000">AXIS</div>`;
+// S1 0.4–1.2: logo slam
+$('S1').innerHTML=`<div class="a" id="lg1" style="left:710px;top:290px;width:500px;height:500px">${logoSVG('#fff')}</div>
+ <div class="a center" id="wm1" style="left:0;width:1920px;top:830px;font-weight:900;font-size:64px;letter-spacing:.5em">${chars('AXIS ROBOTICS')}</div>`;
+// S2 1.2–2.0: BIGGER MODELS? crossed
+$('S2').innerHTML=`<div class="a full" style="background:${G}"></div>
+ <div class="a lbl" style="left:120px;top:150px;color:#000">The next breakthrough won't come from…</div>
+ <div class="a mega" id="b1" style="left:120px;top:220px;font-size:400px;color:#000">BIGGER</div>
+ <div class="a mega" id="b2" style="left:120px;top:560px;font-size:400px;color:#000">MODELS?</div>
+ <div class="a" id="strike" style="left:80px;top:560px;height:70px;background:#fff;transform:rotate(-6deg);transform-origin:0 50%"></div>`;
+// S3 2.0–2.8: BETTER DATA.
+$('S3').innerHTML=`<div class="a full center" style="flex-direction:column">
+ <div class="mega" id="d1" style="font-size:330px">${chars('BETTER')}</div>
+ <div class="mega" id="d2" style="font-size:330px;color:${G}">${chars('DATA.')}</div></div>
+ <div class="a lbl" style="left:120px;bottom:90px;color:#fff;opacity:.6">It might come from</div>`;
+// S4 2.8–3.6: strobe
+const STROBE=[['NEW OBJECTS','#000','#fff'],['NEW PLACES',G,'#000'],['THE UNEXPECTED','#fff','#000'],['THE REAL WORLD','#000',G]];
+$('S4').innerHTML=`<div class="a full" id="s4bg"></div><div class="a full center mega" id="s4t" style="font-size:250px"></div>
+ <div class="a lbl" id="s4l" style="left:120px;top:150px">The data bottleneck</div>`;
+// S5 3.6–5.2: engine
+const ENG=['GENERATE','DEMONSTRATE','TRAIN','ANALYZE','REPEAT ↻'];
+$('S5').innerHTML=`<svg class="a" width="1920" height="1080" style="left:0;top:0;overflow:visible">
+ <g id="rings" transform="translate(960 540)">
+  <circle id="r1" r="430" fill="none" stroke="${G}" stroke-width="6" stroke-dasharray="40 26"/>
+  <circle id="r2" r="370" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="2" stroke-dasharray="4 14"/>
+  <circle id="r3" r="500" fill="none" stroke="${G}" stroke-opacity=".3" stroke-width="2"/>
+  <g id="orb">${[0,1,2,3,4].map(i=>`<circle cx="${430*Math.cos(i*2*Math.PI/5)}" cy="${430*Math.sin(i*2*Math.PI/5)}" r="14" fill="${G}"/>`).join('')}</g>
+ </g></svg>
+ <div class="a full center mega" id="eng" style="font-size:200px"></div>
+ <div class="a center" id="engn" style="left:0;width:1920px;top:690px;font-family:JBM;font-size:28px;letter-spacing:.3em;color:${G}"></div>
+ <div class="a lbl" style="left:120px;top:150px">The compounding data engine</div>`;
+// S6 5.2–6.4: sim → real
+$('S6').innerHTML=`<div class="a full" style="perspective:700px;overflow:hidden"><div class="a" id="floor" style="left:-1920px;top:420px;width:5760px;height:2400px;transform:rotateX(72deg);transform-origin:50% 0;
+ background-image:linear-gradient(${G} 2px,transparent 2px),linear-gradient(90deg,${G} 2px,transparent 2px);background-size:120px 120px;opacity:.8"></div></div>
+ <div class="a full center mega out" id="simT" style="font-size:300px">SIMULATION</div>
+ <div class="a full" id="realP" style="background:#fff"><div class="a full center mega" style="font-size:300px;color:#000">REALITY.</div>
+   <div class="a lbl" style="left:120px;bottom:100px;color:#000">Sim-to-real is the real test</div></div>`;
+// S7 6.4–7.6: marquees
+const ROWS=[['PHYSICAL AI · ','out',1],['BETTER DATA · ','g',-1],['ROBOTS THAT LEARN · ','w',1],['TRAIN IN THE BROWSER · ','outg',-1]];
+$('S7').innerHTML=`<div class="a" id="mqw" style="left:-400px;top:-260px;width:2720px;transform:rotate(-8deg)">${ROWS.map(([t,c,d],i)=>
+ `<div class="mq ${c==='out'?'out':c==='outg'?'outg':''}" data-d="${d}" style="color:${c==='g'?G:c==='w'?'#fff':''};margin:-6px 0">${t.repeat(8)}</div>`).join('')}</div>
+ <div class="a center" id="s7box" style="left:460px;top:430px;width:1000px;height:220px;background:${G};color:#000;font-family:Anton;font-size:96px;text-transform:uppercase;line-height:1">Anyone can<br>train a robot</div>`;
+// S8 7.6–8.4: logo tunnel
+$('S8').innerHTML=`<svg class="a" width="1920" height="1080" style="left:0;top:0"><g id="tun" transform="translate(960 540)"></g></svg>
+ <div class="a" id="lg8" style="left:860px;top:440px;width:200px;height:200px">${logoSVG(G)}</div>`;
+// S9 8.4–10: lockup
+$('S9').innerHTML=`<div class="a" id="lg9" style="left:420px;top:300px;width:330px;height:330px">${logoSVG(G)}</div>
+ <div class="a mega" id="w9" style="left:820px;top:290px;font-size:200px;line-height:.9">${chars('AXIS')}<br>${chars('ROBOTICS')}</div>
+ <div class="a" id="t9" style="left:420px;top:720px;font-weight:800;font-size:54px;letter-spacing:-.01em">The data engine for <span style="color:${G}">Physical AI.</span></div>
+ <div class="a" id="u9" style="left:420px;top:830px;font-family:JBM;font-weight:700;font-size:40px;background:${G};color:#000;padding:16px 36px;border-radius:60px">axisrobotics.ai →</div>`;
+
+// scene timing
+const SC=[[0,.4],[.4,1.2],[1.2,2.0],[2.0,2.8],[2.8,3.6],[3.6,5.2],[5.2,6.4],[6.4,7.6],[7.6,8.4],[8.4,10.01]];
+const HITS=[[.4,26],[1.2,14],[1.6,22],[2.0,18],[2.8,10],[3.0,10],[3.2,10],[3.4,10],[3.6,16],[5.2,12],[5.8,24],[6.4,14],[7.6,10],[8.4,34]];
+const CUTS=[.4,1.2,2.0,2.8,3.6,5.2,5.8,6.4,8.4];
+
+function render(t){
+ // which scene
+ SC.forEach(([a,b],i)=>{$('S'+i).style.display=(t>=a&&t<b)?'block':'none'});
+ // bg
+ bg.fillStyle='#000';bg.fillRect(0,0,1920,1080);
+ if(t>3.6&&t<5.2||t>=8.4){bg.strokeStyle='rgba(11,176,55,.13)';bg.lineWidth=1;const o=(t*120)%96;
+  for(let x=o-96;x<1920;x+=96){bg.beginPath();bg.moveTo(x,0);bg.lineTo(x,1080);bg.stroke()}
+  for(let y=o-96;y<1080;y+=96){bg.beginPath();bg.moveTo(0,y);bg.lineTo(1920,y);bg.stroke()}}
+
+ // ---- S0
+ if(t<.4){Q('.sl').forEach((e,i)=>{const p=eo(seg(t,i*.03,.22));e.style.transform=`translateX(${(i%2?1:-1)*(1-p)*1920}px)`});
+  const p=seg(t,.12,.2);$('s0t').style.opacity=p>0?1:0;$('s0t').style.transform=`scale(${1.6-.6*eo(p)})`;$('s0t').style.letterSpacing=(0.4-.4*eo(p))+'em'}
+ // ---- S1 logo slam
+ if(t>=.4&&t<1.2){const lt=t-.4;const p=eo(seg(lt,0,.22));const lg=$('lg1');
+  lg.style.transform=`scale(${4.5-3.5*p+.06*Math.exp(-lt*6)*Math.sin(lt*40)}) rotate(${(1-p)*-120+lt*40}deg)`;lg.style.filter=`blur(${(1-p)*14}px)`;
+  setRays(lg,i=>eb(seg(lt,.05+i*.012,.3)));
+  Q('.ch',$('wm1')).forEach((c,i)=>{const q=eo(seg(lt,.3+i*.025,.3));c.style.opacity=q;c.style.transform=`translateY(${(1-q)*-80}px)`});
+  $('wm1').style.letterSpacing=(.5-.32*eo(seg(lt,.3,.5)))+'em'}
+ // ---- S2
+ if(t>=1.2&&t<2.0){const lt=t-1.2;[['b1',0],['b2',.18]].forEach(([id,a])=>{const p=seg(lt,a,.14);const e=$(id);e.style.opacity=p>0?1:0;e.style.transform=`scale(${1.5-.5*eo(p)}) translateX(${lt*30}px)`;e.style.transformOrigin='0 50%'});
+  const s=eo(seg(lt,.4,.14));$('strike').style.width=(s*1800)+'px';$('strike').style.top='370px'}
+ // ---- S3
+ if(t>=2.0&&t<2.8){const lt=t-2.0;$('S3').firstElementChild.style.transform=`scale(${1+lt*.12})`;
+  Q('.ch',$('d1')).forEach((c,i)=>{const p=eb(seg(lt,i*.025,.22));c.style.transform=`translateY(${(1-p)*-500}px)`;c.style.opacity=p>0?1:0});
+  Q('.ch',$('d2')).forEach((c,i)=>{const p=eb(seg(lt,.2+i*.025,.22));c.style.transform=`translateY(${(1-p)*500}px)`;c.style.opacity=p>0?1:0})}
+ // ---- S4 strobe
+ if(t>=2.8&&t<3.6){const lt=t-2.8;const k=Math.min(3,Math.floor(lt/.2));const [w,bgc,fg]=STROBE[k];const p=seg(lt-k*.2,0,.12);
+  $('s4bg').style.background=bgc;$('s4t').style.color=fg;$('s4t').textContent=w;$('s4t').style.transform=`scale(${1.25-.25*eo(p)}) skewX(${(1-eo(p))*-12}deg)`;$('s4l').style.color=bgc===G?'#000':G}
+ // ---- S5 engine
+ if(t>=3.6&&t<5.2){const lt=t-3.6;const k=Math.min(4,Math.floor(lt/.32));const p=seg(lt-k*.32,0,.14);const e=$('eng');
+  e.textContent=ENG[k];e.style.color=k===4?G:'#fff';e.style.transform=`translateY(${(1-eo(p))*90}px) scale(${1.15-.15*eo(p)})`;e.style.filter=`blur(${(1-eo(p))*10}px)`;e.style.opacity=eo(p*1.5);
+  $('engn').textContent=`0${k+1} / 05`;
+  const spin=lt*(120+k*60);const pulse=1+.06*Math.exp(-((lt-k*.32))*10);const intro=eb(seg(lt,0,.35));
+  $('r1').setAttribute('transform',`rotate(${spin}) scale(${intro*pulse})`);$('r2').setAttribute('transform',`rotate(${-spin*1.4}) scale(${intro})`);
+  $('r3').setAttribute('transform',`scale(${intro*(1+.1*Math.sin(lt*8))})`);$('orb').setAttribute('transform',`rotate(${spin*1.2}) scale(${intro*pulse})`)}
+ // ---- S6 sim->real
+ if(t>=5.2&&t<6.4){const lt=t-5.2;$('floor').style.backgroundPosition=`0 ${lt*600}px`;
+  const s=eo(seg(lt,0,.25));$('simT').style.transform=`scale(${1.4-.4*s})`;$('simT').style.opacity=s;$('simT').style.letterSpacing=(.2-.2*s)+'em';
+  const w=eo(seg(lt,.6,.16));const x=(1-w)*2400-200;
+  $('realP').style.clipPath=`polygon(${x}px 0,2200px 0,2200px 1080px,${x-300}px 1080px)`;$('realP').firstElementChild.style.transform=`scale(${1.1-.1*eo(seg(lt,.6,.4))})`}
+ // ---- S7 marquee
+ if(t>=6.4&&t<7.6){const lt=t-6.4;Q('.mq').forEach((r,i)=>{const d=+r.dataset.d;r.style.transform=`translateX(${(d>0?-600:-1400)+d*lt*900}px)`});
+  const p=eb(seg(lt,.25,.3));$('s7box').style.transform=`scale(${p}) rotate(${(1-p)*10-2}deg)`;$('s7box').style.opacity=p>0?1:0}
+ // ---- S8 tunnel
+ if(t>=7.6&&t<8.4){const lt=t-7.6;let h='';for(let i=0;i<10;i++){const r=((lt*1.6+i/10)%1);const R=Math.pow(r,2.2)*1400;h+=`<circle r="${R}" fill="none" stroke="${i%3?'#fff':G}" stroke-opacity="${(1-r)*.6+.1}" stroke-width="${2+r*14}"/>`}$('tun').innerHTML=h;
+  const z=Math.pow(eio(seg(lt,.15,.65)),2);const lg=$('lg8');lg.style.transform=`scale(${1+z*28}) rotate(${lt*220}deg)`;setRays(lg,1,.05,t)}
+ // ---- S9 lockup
+ if(t>=8.4){const lt=t-8.4;const lg=$('lg9');const p=eb(seg(lt,0,.3));const beat=Math.exp(-((t-8.4)%B)/.1);
+  lg.style.transform=`scale(${p*(1+.05*beat)}) rotate(${(1-p)*180+lt*25}deg)`;setRays(lg,i=>eb(seg(lt,.05+i*.015,.3)));
+  Q('.ch',$('w9')).forEach((c,i)=>{const q=eo(seg(lt,.12+i*.03,.3));c.style.opacity=q;c.style.transform=`translateX(${(1-q)*160}px)`;c.style.filter=`blur(${(1-q)*8}px)`});
+  const a=eo(seg(lt,.45,.35));$('t9').style.opacity=a;$('t9').style.transform=`translateY(${(1-a)*40}px)`;
+  const u=eb(seg(lt,.65,.35));$('u9').style.opacity=cl(u);$('u9').style.transform=`scale(${u})`;$('u9').style.transformOrigin='0 50%'}
+
+ // ---- camera: beat pulse + shake + push
+ let sx=0,sy=0,rot=0;HITS.forEach(([h,a])=>{if(t>=h){const d=t-h,e=a*Math.exp(-d/.09);sx+=e*Math.sin(d*90+h*7);sy+=e*Math.cos(d*77+h*3);rot+=e*.02*Math.sin(d*60)}});
+ const kick=(t>=.4&&t<7.6)?Math.exp(-((t-.4)%B)/.07):0;
+ $('cam').style.transform=`translate(${sx}px,${sy}px) rotate(${rot}deg) scale(${1+.025*kick})`;
+ // glitch on cuts
+ const g=CUTS.reduce((m,c)=>Math.max(m,(t>=c&&t<c+.07)?1-(t-c)/.07:0),0);
+ $('cam').style.filter=g>0?`drop-shadow(${18*g}px 0 0 rgba(11,176,55,.9)) drop-shadow(${-14*g}px 0 0 rgba(255,255,255,.6))`:'none';
+ // fx: glitch slices + grain + vignette
+ fx.clearRect(0,0,1920,1080);
+ if(g>0){for(let i=0;i<7;i++){const y=rnd(i+t*100)*1080,h=10+rnd(i*3+t*50)*60;fx.fillStyle=rnd(i+t)>.5?'rgba(11,176,55,.85)':'rgba(255,255,255,.7)';fx.fillRect(rnd(i*9+t)*600-300,y,1920*rnd(i*5+t*3),h*g)}}
+ fx.globalAlpha=1;fx.drawImage(grains[Math.floor(t*60)%6],0,0,1920,1080);
+ const vg=fx.createRadialGradient(960,540,500,960,540,1150);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.35)');fx.fillStyle=vg;fx.fillRect(0,0,1920,1080);
+ // flash
+ const f=[[.4,.9],[2.0,.5],[3.6,.4],[5.8,.6],[8.4,1]].reduce((m,[c,a])=>Math.max(m,t>=c?a*Math.exp(-(t-c)/.06):0),0);$('flash').style.opacity=f;
+ // hud
+ $('hudR').textContent='00:'+String(Math.floor(t*100)).padStart(4,'0').replace(/(\d\d)(\d\d)/,'$1.$2');
+ const dark=(t>=1.2&&t<2.0)||(t>=5.8&&t<6.4)||(t>=2.8&&t<3.6&&[1,2].includes(Math.floor((t-2.8)/.2)));
+ $('hudL').style.color=dark?'#000':'#fff';$('hudR').style.color=dark?'#000':G;
+ $('bar').style.width=(t/10*1920)+'px';$('bar').style.background=dark?'#000':G}
+window.render=render;document.fonts.ready.then(()=>{window.READY=1;render(0)});
 </script></body></html>
