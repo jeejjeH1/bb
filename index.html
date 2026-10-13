@@ -1,3 +1,13 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Motion graphics by Master (@0xMASTER82) for GenLayer, Seismic, Startale and Kast.">
+<meta property="og:title" content="MASTER Portfolio">
+<meta property="og:image" content="assets/banner-master.jpg">
+<meta name="theme-color" content="#0b0a07">
+<link rel="icon" href="assets/pfp.jpg">
 <title>MASTER Portfolio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,6 +29,7 @@
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
+html,body{overflow-x:clip;max-width:100%}
 body{background:var(--ink);color:var(--paper);font-family:var(--f-body);font-size:16px;line-height:1.55;overflow-x:hidden;margin:0}
 a{color:inherit}
 :focus-visible{outline:3px solid var(--gold);outline-offset:3px}
@@ -89,6 +100,9 @@ section{padding-block:clamp(72px,10vw,130px)}
 .reel .big{position:absolute;left:24px;bottom:20px;z-index:2;pointer-events:none}
 .reel .big h3{font-family:var(--f-display);font-weight:400;font-size:clamp(34px,6vw,80px);line-height:.95;text-transform:uppercase;margin:0;color:var(--paper);text-shadow:4px 4px 0 #000;transform:skewX(-8deg)}
 .reel .big h3 em{font-style:normal;color:var(--gold)}
+.reel .snd{margin:10px 0 0;color:var(--gold);text-shadow:2px 2px 0 #000}
+.reel.intro{margin-bottom:84px}
+@media(max-width:600px){.reel .play{width:48px;height:48px;right:12px;bottom:12px}.reel .play svg{width:20px;height:20px}.reel .big{left:14px;bottom:12px;right:70px}.reel .snd{font-size:10px;letter-spacing:.08em}}
 .reel .play,.card .play{position:absolute;right:20px;bottom:20px;z-index:2;width:76px;height:76px;background:var(--gold);color:var(--ink);display:grid;place-items:center;clip-path:polygon(0 0,100% 12%,88% 100%,6% 88%);transition:transform .25s}
 .reel:hover .play,.card:hover .play{transform:scale(1.14) rotate(-6deg)}
 .play svg{width:30px;height:30px;fill:currentColor;margin-left:4px}
@@ -204,7 +218,7 @@ body.lock{overflow:hidden}
 .hero .ghostword{position:absolute;right:-2vw;bottom:-4vw;font-family:var(--f-display);font-size:28vw;line-height:.8;color:transparent;-webkit-text-stroke:2px rgba(255,198,26,.14);z-index:-1;pointer-events:none;white-space:nowrap}
 #bolts{position:absolute;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;mix-blend-mode:screen}
 
-section{position:relative}
+section{position:relative;overflow:hidden}
 .gw{position:absolute;left:0;top:50px;font-family:var(--f-display);font-size:24vw;line-height:.8;color:transparent;-webkit-text-stroke:2px rgba(255,198,26,.09);white-space:nowrap;pointer-events:none;z-index:0;transform:translateX(var(--gx,0px))}
 section .wrap{position:relative;z-index:1}
 
@@ -245,6 +259,8 @@ section .wrap{position:relative;z-index:1}
   *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 }
 </style>
+</head>
+<body>
 
 <div id="bar"></div>
 <div id="pre" aria-hidden="true">
@@ -288,7 +304,6 @@ section .wrap{position:relative;z-index:1}
 <section id="works">
   <div class="wrap">
     <div class="reel rv intro" id="intro" role="button" tabindex="0" aria-label="Play Master intro"></div>
-    <div class="reel rv" id="reel" role="button" tabindex="0" aria-label="Play showreel"></div>
     <div class="head">
       <h2 class="disp">All my <em>works</em></h2>
       <div class="filters" id="filters" role="group" aria-label="Filter works"></div>
@@ -374,7 +389,6 @@ const WORKS = [
   W("PrismaX IROS 2026",     "Other","mddddd",    "ccr-00a94ac6-9ri49r","out/prismax-iros2026.mp4",41)
 ];
 const INTRO = {title:'Master Intro',brand:'Intro',repo:'bb',branch:'',path:'',local:'assets/master-intro.mp4',mb:3};
-const REEL = W("Showreel","Reel","mmsjeuiw","ccr-f7c51b69-luzcd9","out/showreel.mp4",89);
 /* ======================================================================= */
 
 const $ = s => document.querySelector(s);
@@ -385,7 +399,7 @@ const PLAY = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3l16 9-16 
 
 // stats
 const brands = [...new Set(WORKS.map(w=>w.brand))].filter(b=>b!=='Other');
-$('#stats').innerHTML = [[WORKS.length+2,'motion videos'],[brands.length,'brands'],['100%','made in code']]
+$('#stats').innerHTML = [[WORKS.length+1,'motion videos'],[brands.length,'brands'],['100%','made in code']]
   .map(([n,l])=>`<div><b>${n}</b><span class="mono">${l}</span></div>`).join('');
 
 // marquees
@@ -393,13 +407,10 @@ const fill = (el, list) => { const h = list.map(w=>`<span>${esc(w)}</span>`).joi
 fill($('#t1'), ["Master","0xMASTER82","Motion graphics","GenLayer","Seismic","Startale","Kast"]);
 fill($('#t2'), ["Selected works","Follow @0xMASTER82","Selected works","Follow @0xMASTER82"]);
 
-// showreel
-$('#reel').innerHTML = `<video muted loop playsinline preload="none" data-src="${esc(url(REEL))}"></video>
-  <div class="big"><h3>Watch the <em>showreel</em></h3></div><div class="play">${PLAY}</div>`;
 
 // intro (local file, autoplays muted when visible)
 $('#intro').innerHTML = `<video muted loop playsinline preload="metadata" src="${INTRO.local}"></video>
-  <div class="big"><h3>Master <em>intro</em></h3></div><div class="play">${PLAY}</div>`;
+  <div class="big"><h3>Master <em>intro</em></h3><p class="mono snd">▶ Tap to watch with sound</p></div><div class="play">${PLAY}</div>`;
 (function(){ const v=$('#intro video'); if(!('IntersectionObserver' in window)) return;
   new IntersectionObserver(es=>es.forEach(e=>{ e.isIntersecting ? v.play().catch(()=>{}) : v.pause(); }),{threshold:.4}).observe(v); })();
 
@@ -450,10 +461,8 @@ function open(w){
 }
 function close(){ dv.pause(); dv.removeAttribute('src'); dv.load(); if(dlg.close) dlg.close(); else dlg.removeAttribute('open'); }
 grid.addEventListener('click', e=>{ const c=e.target.closest('.card'); if(c) open(WORKS[+c.dataset.i]); });
-$('#reel').addEventListener('click', ()=>open(REEL));
 $('#intro').addEventListener('click', ()=>open(INTRO));
 $('#intro').addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); open(INTRO); } });
-$('#reel').addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); open(REEL); } });
 $('#dx').addEventListener('click', close);
 dlg.addEventListener('click', e=>{ if(e.target===dlg) close(); });
 dlg.addEventListener('close', ()=>{ dv.pause(); });
@@ -657,3 +666,5 @@ if('IntersectionObserver' in window && !RM){
   })();
 })();
 </script>
+</body>
+</html>
