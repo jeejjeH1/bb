@@ -315,31 +315,6 @@ dialog#dlg{width:min(1180px,calc(100% - 24px))}
 .dlg .nav2 button:hover{background:var(--gold);color:var(--ink)}
 .dlg .count{color:var(--mute);align-self:center}
 
-/* order form */
-.order{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:clamp(28px,5vw,70px);align-items:start;margin-top:40px}
-.order .pitch p{color:#e6dfc9;font-size:18px;max-width:42ch;margin:0 0 18px}
-.order .pitch ol{margin:0;padding:0;list-style:none;display:grid;gap:12px;counter-reset:s}
-.order .pitch li{display:flex;gap:14px;align-items:baseline;color:var(--paper)}
-.order .pitch li::before{counter-increment:s;content:counter(s,decimal-leading-zero);font-family:var(--f-display);color:var(--gold);font-size:26px}
-form.brief{background:var(--ink-2);border:2px solid var(--line);padding:clamp(18px,3vw,30px);display:grid;gap:18px;box-shadow:10px 10px 0 var(--gold)}
-.fld{display:grid;gap:8px;min-width:0}
-.fld>label,.fld>legend{font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);padding:0}
-fieldset.fld{border:0;margin:0;padding:0}
-.fld input,.fld textarea{font:inherit;color:var(--paper);background:var(--ink);border:2px solid #3a3522;padding:12px 14px;width:100%;transition:border-color .2s}
-.fld input:focus,.fld textarea:focus{outline:none;border-color:var(--gold)}
-.fld textarea{min-height:110px;resize:vertical}
-.opts{display:flex;flex-wrap:wrap;gap:8px}
-.opts input{position:absolute;opacity:0;pointer-events:none}
-.opts label{font-family:var(--f-mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;border:2px solid #3a3522;padding:9px 12px;cursor:pointer;transition:.2s}
-.opts input:checked+label{background:var(--gold);border-color:var(--gold);color:var(--ink)}
-.opts input:focus-visible+label{outline:3px solid var(--gold);outline-offset:2px}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.err{color:#ff6b6b;font-size:14px;min-height:1em;margin:0}
-.preview{font-family:var(--f-mono);font-size:12px;white-space:pre-wrap;background:var(--ink);border:2px dashed #3a3522;padding:12px;color:var(--mute);max-height:180px;overflow:auto}
-.sendrow{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,140%);z-index:160;background:var(--gold);color:var(--ink);font-weight:800;padding:14px 20px;max-width:calc(100% - 32px);transition:transform .35s cubic-bezier(.2,.9,.2,1);box-shadow:6px 6px 0 #000}
-.toast.on{transform:translate(-50%,0)}
-@media(max-width:800px){.order{grid-template-columns:1fr}.row2{grid-template-columns:1fr}}
 
 @media(prefers-reduced-motion:reduce){
   section.stage{height:auto}.stage .sticky{position:relative;height:auto;min-height:620px}
@@ -368,7 +343,7 @@ fieldset.fld{border:0;margin:0;padding:0}
     <div class="links">
       <a href="#works">Works</a>
       <a href="#about">About</a>
-      <a href="#order">Hire me</a>
+      <a href="#contact">Contact</a>
       <button class="sndbtn" id="snd" type="button" aria-pressed="false">Sound off</button>
       <a class="btn" href="https://x.com/0xMASTER82" target="_blank" rel="noopener">Follow on X</a>
     </div>
@@ -434,41 +409,15 @@ fieldset.fld{border:0;margin:0;padding:0}
 <section class="contact" id="contact">
   <div class="wrap rv">
     <h2 class="disp">Let's <em>build.</em></h2>
-    <div class="order" id="order">
-      <div class="pitch">
-        <p>Tell me about your project in under a minute. The form turns your answers into a message for my X DMs.</p>
-        <ol>
-          <li>Fill in the brief</li>
-          <li>Tap “Send on X”: the message is copied and my X profile opens</li>
-          <li>Tap Message on my profile and paste</li>
-        </ol>
-        <div class="handle" style="margin-top:28px">
-          <span class="at">@0xMASTER82</span>
-          <a class="btn ghost" href="https://github.com/jeejjeH1" target="_blank" rel="noopener">GitHub</a>
-        </div>
-      </div>
-      <form class="brief" id="brief" novalidate>
-        <div class="row2">
-          <div class="fld"><label for="f-name">Your name or @handle</label><input id="f-name" name="name" autocomplete="nickname" placeholder="@yourproject"></div>
-          <div class="fld"><label for="f-proj">Project / brand</label><input id="f-proj" name="proj" placeholder="e.g. GenLayer"></div>
-        </div>
-        <fieldset class="fld"><legend>What do you need?</legend><div class="opts" id="o-type"></div></fieldset>
-        <div class="fld"><label for="f-about">What's the project about?</label><textarea id="f-about" name="about" placeholder="The post or launch this video is for, key message, any links"></textarea></div>
-        <fieldset class="fld"><legend>Budget</legend><div class="opts" id="o-budget"></div></fieldset>
-        <fieldset class="fld"><legend>Timeline</legend><div class="opts" id="o-time"></div></fieldset>
-        <p class="err" id="f-err" role="alert"></p>
-        <div class="preview" id="f-prev" aria-live="polite"></div>
-        <div class="sendrow">
-          <button class="btn" type="submit" id="f-send">Send on X</button>
-          <button class="btn ghost" type="button" id="f-post">Post it publicly</button>
-        </div>
-      </form>
+    <div class="handle">
+      <span class="at">@0xMASTER82</span>
+      <a class="btn" href="https://x.com/0xMASTER82" target="_blank" rel="noopener">Message me on X</a>
+      <a class="btn ghost" href="https://github.com/jeejjeH1" target="_blank" rel="noopener">GitHub</a>
     </div>
   </div>
 </section>
 
 <div class="wipe" id="wipe" aria-hidden="true"><i></i><i></i></div>
-<div class="toast" id="toast" role="status"></div>
 <footer>
   <div class="wrap mono"><span>© 2026 Master</span><span>x.com/0xMASTER82</span></div>
 </footer>
@@ -953,45 +902,6 @@ const sfx = {
   layout(); req();
 })();
 
-/* ================= order form -> X ================= */
-(function(){
-  const opts = {
-    'o-type': ['Explainer', 'Launch / promo', 'Announcement', 'Event recap', 'Something else'],
-    'o-budget': ['Under $300', '$300–700', '$700–1,500', '$1,500+', "Let's talk"],
-    'o-time': ['This week', '1–2 weeks', '2–4 weeks', 'Flexible']
-  };
-  Object.entries(opts).forEach(([id, list])=>{
-    $('#'+id).innerHTML = list.map((v,i)=>`<input type="radio" name="${id}" id="${id}-${i}" value="${esc(v)}"><label for="${id}-${i}">${esc(v)}</label>`).join('');
-  });
-  const form = $('#brief'), prev = $('#f-prev'), err = $('#f-err');
-  const pick = n => { const el = form.querySelector(`[name="${n}"]:checked`); return el ? el.value : ''; };
-  const f = k => form.elements[k].value.trim();
-  const msg = () => ['Hey Master! Project brief from your site:', '',
-    `From: ${f('name') || '-'}`, `Project: ${f('proj') || '-'}`, `Need: ${pick('o-type') || '-'}`,
-    `Budget: ${pick('o-budget') || '-'}`, `Timeline: ${pick('o-time') || '-'}`, '', f('about') || '-'].join('\n');
-  const upd = () => { prev.textContent = msg(); };
-  form.addEventListener('input', upd); form.addEventListener('change', ()=>{ upd(); sfx.tick(); }); upd();
-  function toast(t){ const el = $('#toast'); el.textContent = t; el.classList.add('on'); clearTimeout(el._t); el._t = setTimeout(()=>el.classList.remove('on'), 5000); }
-  function check(){
-    if(!pick('o-type') || !f('about')){ err.textContent = 'Pick what you need and write a line about the project, then send.'; return false; }
-    err.textContent = ''; return true;
-  }
-  form.addEventListener('submit', e=>{
-    e.preventDefault(); if(!check()) return;
-    const m = msg();
-    const copied = navigator.clipboard ? navigator.clipboard.writeText(m) : Promise.reject();
-    copied.then(()=>toast('Brief copied. On my X profile, tap Message and paste it.'))
-      .catch(()=>{ const r = document.createRange(); r.selectNodeContents(prev); const s = getSelection(); s.removeAllRanges(); s.addRange(r);
-        toast('Copy the highlighted brief, then tap Message on my X profile.'); });
-    window.open('https://x.com/0xMASTER82', '_blank', 'noopener');
-    sfx.tick();
-  });
-  $('#f-post').addEventListener('click', ()=>{
-    if(!check()) return;
-    const t = `@0xMASTER82 I'd like a motion graphic: ${pick('o-type')}, budget ${pick('o-budget') || 'TBD'}, timeline ${pick('o-time') || 'flexible'}. ${f('about')}`.slice(0, 275);
-    window.open('https://x.com/intent/post?text=' + encodeURIComponent(t), '_blank', 'noopener');
-  });
-})();
 
 </script>
 </body>
