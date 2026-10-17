@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Seismic Confidential Contracts</title>
+<!-- 81s, 1920x1080 motion graphic. window.render(t) draws frame t deterministically; render.cjs captures it. Open directly for a live preview. -->
+<style>
+@font-face{font-family:JBM;src:url(../jbm.woff2) format('woff2');font-weight:100 900}
+:root{--mauve:#825A6D;--purple:#523542;--pink:#D3AFC0;--g50:#FCFCFC;--g200:#E8E8E8;--g300:#D4D4D4;--g400:#A4A3A1;--g500:#737373;--g800:#282826;--black:#161616}
+html,body{margin:0;background:#000;overflow:hidden;height:100%}
+#stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;background:var(--g50);font-family:Inter,sans-serif;color:var(--black);transform-origin:0 0;-webkit-font-smoothing:antialiased}
+#world{position:absolute;inset:0}
+.sc{position:absolute;inset:0;display:none;overflow:hidden}
+.abs{position:absolute}
+.mono{font-family:JBM,monospace}
+.disp{font-family:'Inter Display',Inter,sans-serif}
+.grid{position:absolute;inset:-200px;background-image:linear-gradient(rgba(22,22,22,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(22,22,22,.05) 1px,transparent 1px);background-size:96px 96px;transform:translate(var(--gx),var(--gy))}
+.dark .grid{background-image:linear-gradient(rgba(255,255,255,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.045) 1px,transparent 1px)}
+.lbl{font-family:JBM,monospace;font-size:16px;letter-spacing:.22em;text-transform:uppercase;color:var(--mauve);font-weight:700}
+.ln{overflow:hidden;padding-bottom:.08em;margin-bottom:-.08em}
+.ln>span{display:inline-block;will-change:transform}
+svg.logo{overflow:visible;display:block}
+svg.logo polygon{transform-box:fill-box;transform-origin:center}
+
+/* HUD */
+#hud{position:absolute;inset:0;pointer-events:none;z-index:40}
+#hud .tl{position:absolute;left:60px;top:44px;display:flex;align-items:center;gap:14px}
+#hud .tl svg{width:24px;height:35px}
+#hud .tl span,#hud .tr{font-family:JBM,monospace;font-size:14px;letter-spacing:.24em;font-weight:700}
+#hud .tr{position:absolute;right:60px;top:54px}
+#hud .bar{position:absolute;left:60px;right:60px;bottom:46px;height:2px;background:rgba(127,127,127,.25)}
+#hud .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--mauve);width:0}
+#hud .mk{position:absolute;bottom:58px;font-family:JBM,monospace;font-size:12px;letter-spacing:.2em;font-weight:700;transform:translateX(-4px)}
+#hud .mk:before{content:'';position:absolute;left:0;top:23px;width:10px;height:10px;border-radius:50%;background:currentColor}
+
+/* transition shards */
+#wipe{position:absolute;inset:0;z-index:50;pointer-events:none;overflow:visible}
+
+/* cursor */
+#cur{position:absolute;left:0;top:0;z-index:60;width:34px;height:46px;transform-origin:0 0;filter:drop-shadow(0 6px 10px rgba(0,0,0,.25))}
+#rip{position:absolute;z-index:59;border-radius:50%;border:3px solid var(--mauve);opacity:0}
+#flash{position:absolute;inset:0;background:#fff;z-index:45;opacity:0;pointer-events:none}
+
+/* chapter header */
+.chap{position:absolute;left:120px;top:104px;display:flex;align-items:flex-start;gap:44px}
+.chap .num{position:relative;font-family:'Inter Display';font-weight:700;font-size:184px;line-height:.86;letter-spacing:-.04em;color:transparent;-webkit-text-stroke:2px var(--mauve)}
+.chap .num b{position:absolute;inset:0;color:var(--mauve);-webkit-text-stroke:0;font-weight:700}
+.chap .txt{padding-top:8px}
+.chap h2{margin:14px 0 0;font-family:'Inter Display';font-weight:600;font-size:62px;line-height:1.04;letter-spacing:-.03em}
+.chap p{margin:16px 0 0;font-size:25px;color:var(--g500)}
+
+/* intro */
+#s0 .title{left:640px;top:286px}
+#s0 .ttl{font-family:'Inter Display';font-weight:600;font-size:94px;line-height:1.02;letter-spacing:-.035em}
+#conf{position:relative;color:var(--mauve);padding:0 .12em;margin-left:-.12em}
+#conf i{position:absolute;left:0;top:.1em;bottom:.02em;right:0;background:var(--purple);transform-origin:0 50%;transform:scaleX(0);z-index:-1;border-radius:6px}
+#conf{z-index:0;isolation:isolate}
+.ring{position:absolute;border-radius:50%;border:2px solid var(--mauve);pointer-events:none}
+
+/* chain */
+#s1{background:var(--black);color:#fff}
+#s1 .hd{left:120px;top:150px}
+#s1 h1{margin:18px 0 0;font-family:'Inter Display';font-weight:600;font-size:64px;line-height:1.08;letter-spacing:-.03em}
+#s1 .q{left:0;right:0;top:170px;text-align:center}
+#s1 .q h1{font-size:84px}
+.acc{color:var(--pink)}
+#chain{left:0;top:520px;height:330px;width:4000px}
+.blk{position:absolute;top:0;width:360px;height:320px;border-radius:18px;background:#1E1C1D;border:1.5px solid #333;padding:26px 28px;box-sizing:border-box;font-family:JBM,monospace}
+.blk .bh{display:flex;justify-content:space-between;font-size:14px;letter-spacing:.16em;color:var(--g400);padding-bottom:16px;border-bottom:1px solid #333;margin-bottom:14px}
+.blk .row{display:flex;flex-direction:column;margin-bottom:11px}
+.blk .row i{font-style:normal;font-size:11px;letter-spacing:.2em;color:var(--g500)}
+.blk .row b{font-weight:500;font-size:19px;color:#F2F2F2;margin-top:3px;white-space:nowrap}
+.blk .stamp{position:absolute;right:20px;bottom:20px;font-size:12px;letter-spacing:.2em;font-weight:700;padding:6px 10px;border-radius:6px;background:#2C2A2B;color:var(--g400)}
+.link{position:absolute;top:156px;height:2px;width:56px;background:#3A3A3A}
+#lens{width:250px;height:250px;margin:-125px 0 0 -125px;border-radius:50%;border:3px solid var(--pink);box-shadow:0 0 0 10px rgba(211,175,192,.12),0 0 60px rgba(130,90,109,.5),inset 0 0 40px rgba(130,90,109,.35);backdrop-filter:brightness(1.35) contrast(1.1)}
+#lens:before,#lens:after{content:'';position:absolute;background:rgba(211,175,192,.5)}
+#lens:before{left:50%;top:18px;bottom:18px;width:1px}
+#lens:after{top:50%;left:18px;right:18px;height:1px}
+#lens span{position:absolute;left:210px;top:-34px;white-space:nowrap;font-family:JBM,monospace;font-size:14px;font-weight:700;letter-spacing:.18em;background:var(--pink);color:var(--black);padding:8px 12px;border-radius:6px}
+#glow1{width:900px;height:900px;margin:-450px 0 0 -450px;border-radius:50%;background:radial-gradient(closest-side,rgba(130,90,109,.55),rgba(130,90,109,.18) 55%,transparent)}
+#s1 .come{left:0;right:0;top:300px;text-align:center}
+#s1 .come h1{font-size:72px}
+
+/* cards (toolkit) */
+.tk{position:absolute;top:430px;width:520px;height:450px;border-radius:24px;background:#fff;border:1.5px solid var(--g200);box-sizing:border-box;padding:44px;box-shadow:0 30px 60px -30px rgba(22,22,22,.25)}
+.tk .ic{width:92px;height:92px;border-radius:22px;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--g200)}
+.tk .nm{font-family:JBM,monospace;font-weight:700;font-size:58px;margin-top:34px;letter-spacing:-.02em}
+.tk .rl{font-size:26px;font-weight:600;margin-top:10px}
+.tk .ds{font-size:20px;margin-top:10px;line-height:1.4}
+.tk .chip{position:absolute;left:44px;right:44px;bottom:40px;height:56px;border-radius:12px;font-family:JBM,monospace;font-size:20px;display:flex;align-items:center;padding:0 20px}
+.tk .top{position:absolute;left:44px;right:44px;top:0;height:5px;border-radius:0 0 5px 5px;background:var(--mauve);transform-origin:0 0}
+.foot{position:absolute;left:0;right:0;text-align:center;font-size:24px;color:var(--g500)}
+.foot b{color:var(--black);font-weight:600}
+
+/* windows */
+.win{position:absolute;border-radius:20px;background:#161616;box-shadow:0 50px 90px -40px rgba(22,22,22,.55),0 0 0 1px rgba(0,0,0,.4);overflow:hidden;color:#E8E8E8}
+.win .tb{height:56px;background:#202020;display:flex;align-items:center;padding:0 22px;gap:10px;border-bottom:1px solid #2c2c2c}
+.win .tb i{width:13px;height:13px;border-radius:50%;background:#3a3a3a}
+.win .tb span{font-family:JBM,monospace;font-size:16px;color:var(--g400);margin-left:18px;letter-spacing:.04em}
+.win .tb .tab{margin-left:22px;padding:8px 16px;border-radius:8px;background:#161616;color:#E8E8E8}
+#code{position:absolute;left:0;right:0;top:56px;bottom:44px;padding:30px 0 0;font-family:JBM,monospace;font-size:27px;line-height:45px;white-space:pre}
+#code .l{display:flex}
+#code .n{width:78px;text-align:right;padding-right:28px;color:#4a4a4a;flex:none}
+.cm{color:#6E6E6E}.kw{color:#C792AB}.ty{color:#E9B8CF}.fn{color:#fff;font-weight:700}.nu{color:#A4A3A1}
+.caret{display:inline-block;width:3px;height:34px;background:var(--pink);vertical-align:-6px;margin-left:1px}
+.tok{border-radius:7px;padding:0 4px;margin:0 -4px;position:relative;display:inline-block;line-height:40px}
+.tok b{display:inline-block;font-weight:inherit;color:#fff}
+.sbar{position:absolute;left:0;right:0;bottom:0;height:44px;background:#202020;border-top:1px solid #2c2c2c;font-family:JBM,monospace;font-size:14px;letter-spacing:.12em;color:var(--g400);display:flex;align-items:center;padding:0 24px;gap:28px}
+.sbar b{color:var(--pink);font-weight:700}
+.cmp{position:absolute;left:1180px;width:620px;border-radius:22px;box-sizing:border-box;padding:34px 38px;border:1.5px solid var(--g200);background:#fff}
+.cmp .t{font-family:JBM,monospace;font-size:13px;letter-spacing:.22em;font-weight:700;color:var(--g500)}
+.cmp .big{font-family:JBM,monospace;font-weight:700;font-size:56px;margin-top:12px;letter-spacing:-.02em}
+.cmp .d{font-size:21px;line-height:1.4;margin-top:8px;color:var(--g500)}
+.cmp .v{margin-top:18px;height:56px;border-radius:12px;background:var(--g50);border:1px solid var(--g200);display:flex;align-items:center;gap:14px;padding:0 18px;font-family:JBM,monospace;font-size:22px}
+#cB{background:var(--purple);border-color:var(--purple);color:#fff}
+#cB .t{color:var(--pink)}#cB .d{color:#E3CCD7}
+#cB .v{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.14)}
+
+/* terminal */
+#term{position:absolute;left:0;right:0;top:56px;bottom:0;padding:30px 36px;font-family:JBM,monospace;font-size:25px;line-height:44px;white-space:pre}
+#term .p{color:var(--pink)}#term .dim{color:var(--g500)}#term .ok{color:#fff;font-weight:700}
+#rem .row{position:absolute;left:40px;right:40px;height:80px;border-radius:14px;display:flex;align-items:center;gap:20px;padding:0 24px;box-sizing:border-box;font-size:24px;font-weight:600}
+#rem .cb{width:40px;height:40px;border-radius:10px;border:2px solid var(--g300);box-sizing:border-box;display:flex;align-items:center;justify-content:center;flex:none}
+#rem .row small{margin-left:auto;font-family:JBM,monospace;font-size:13px;letter-spacing:.16em;font-weight:700}
+
+/* apps */
+.ap{position:absolute;top:440px;width:316px;height:380px;border-radius:24px;background:#fff;border:1.5px solid var(--g200);box-sizing:border-box;padding:34px 30px;box-shadow:0 30px 60px -34px rgba(22,22,22,.3);backface-visibility:hidden}
+.ap .ix{font-family:JBM,monospace;font-size:14px;letter-spacing:.2em;font-weight:700;color:var(--mauve)}
+.ap svg{display:block;margin:30px 0 34px}
+.ap h3{margin:0;font-family:'Inter Display';font-weight:600;font-size:31px;line-height:1.12;letter-spacing:-.02em}
+
+/* why */
+#s6{background:var(--purple);color:#fff}
+#s6 .ttl{font-family:'Inter Display';font-weight:600;letter-spacing:-.035em}
+.spd{position:absolute;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.55));border-radius:2px}
+#strike{position:absolute;height:8px;background:var(--pink);left:-8px;right:-8px;top:54%;transform-origin:0 50%;border-radius:4px}
+.red{position:relative;display:inline-block}
+.red i{position:absolute;left:-6px;right:-6px;top:12%;bottom:4%;background:var(--black);border-radius:6px}
+
+/* outro */
+.pill{position:absolute;top:640px;width:460px;height:84px;border-radius:42px;border:1.5px solid var(--g300);background:#fff;display:flex;align-items:center;gap:18px;padding:0 30px;box-sizing:border-box;font-family:JBM,monospace;font-size:24px;font-weight:700}
+.pill small{margin-left:auto;font-size:28px}
+</style>
+</head>
+<body>
+<div id="stage">
+<div id="world">
+
+<!-- 0 · intro -->
+<div class="sc" id="s0">
+  <div class="grid"></div>
+  <div class="ring" id="r0a"></div><div class="ring" id="r0b"></div><div class="ring" id="r0c"></div>
+  <div class="abs" id="L0" style="width:308px;height:448px"></div>
+  <div class="abs title">
+    <div class="lbl" id="t0l">A builder's guide · 4 steps</div>
+    <div class="ttl" style="margin-top:26px">
+      <div class="ln"><span>How to build your first</span></div>
+      <div class="ln"><span><span id="conf"><i></i><em style="font-style:normal" id="confT">confidential</em></span></span></div>
+      <div class="ln"><span>smart contract</span></div>
+      <div class="ln"><span>with Seismic?</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 1 · public chain -> shielded -->
+<div class="sc dark" id="s1">
+  <div class="grid"></div>
+  <div class="abs hd" id="h1a">
+    <div class="lbl" style="color:var(--pink)">The problem</div>
+    <h1><div class="ln"><span>On public blockchains, transaction data and</span></div><div class="ln"><span>financial activity can be <span class="acc">visible to everyone.</span></span></div></h1>
+  </div>
+  <div class="abs q" id="h1b"><h1><div class="ln"><span>Should every piece of financial</span></div><div class="ln"><span>information be <span class="acc">public?</span></span></div></h1></div>
+  <div class="abs" id="chain"></div>
+  <div class="abs" id="lens"><span>READABLE BY ANYONE</span></div>
+  <div class="abs" id="glow1"></div>
+  <div class="ring" id="r1" style="border-width:4px;border-color:var(--pink)"></div>
+  <div class="abs" id="L1" style="width:206px;height:300px"></div>
+  <div class="abs come" id="h1c"><h1><div class="ln"><span>This is where <span class="acc">Seismic</span> comes in.</span></div></h1></div>
+</div>
+
+<!-- 2 · toolkit -->
+<div class="sc" id="s2">
+  <div class="grid"></div>
+  <div class="chap" data-n="01"><div class="num">01<b>01</b></div><div class="txt"><div class="lbl">Step 01</div><h2><div class="ln"><span>Explore Seismic's Developer Toolkit</span></div></h2><p>Specialized tools to build privacy-enabled smart contracts.</p></div></div>
+  <div class="tk" style="left:120px"><div class="top"></div><div class="ic"><svg width="52" height="52" viewBox="0 0 52 52" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"><path d="M8 18h22l6 6v4H8z"/><path d="M36 22h8"/><path d="M14 28v8h16v-8"/><path d="M10 42h24"/></svg></div><div class="nm">sforge</div><div class="rl">Build &amp; test contracts</div><div class="ds">Compile projects and run your test suites.</div><div class="chip">$ sforge build</div></div>
+  <div class="tk" style="left:700px"><div class="top"></div><div class="ic"><svg width="52" height="52" viewBox="0 0 52 52" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"><rect x="8" y="8" width="36" height="11" rx="3"/><rect x="8" y="23" width="36" height="11" rx="3"/><path d="M26 34v8M14 44h24"/><circle cx="15" cy="13.5" r="1" fill="currentColor"/><circle cx="15" cy="28.5" r="1" fill="currentColor"/></svg></div><div class="nm">sanvil</div><div class="rl">Local development node</div><div class="ds">Spin up a local chain to test against.</div><div class="chip">$ sanvil</div></div>
+  <div class="tk" style="left:1280px"><div class="top"></div><div class="ic"><svg width="52" height="52" viewBox="0 0 52 52" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"><path d="M18 10c-5 0-5 3-5 8s-4 8-4 8 4 3 4 8 0 8 5 8"/><path d="M34 10c5 0 5 3 5 8s4 8 4 8-4 3-4 8 0 8-5 8"/><path d="M26 19l6 7-6 7-6-7z"/></svg></div><div class="nm">ssolc</div><div class="rl">Seismic Solidity compiler</div><div class="ds">Compiles Solidity with Seismic-specific features.</div><div class="chip">$ ssolc Vault.sol</div></div>
+  <div class="foot" id="f2" style="top:942px">A familiar starting point for developers exploring <b>confidential computing onchain.</b></div>
+</div>
+
+<!-- 3 · contract -->
+<div class="sc" id="s3">
+  <div class="grid"></div>
+  <div class="chap"><div class="num">02<b>02</b></div><div class="txt"><div class="lbl">Step 02</div><h2><div class="ln"><span>Write Your First Confidential Contract</span></div></h2><p>Seismic supports shielded data types.</p></div></div>
+  <div class="win" id="ed" style="left:120px;top:380px;width:1000px;height:600px">
+    <div class="tb"><i></i><i></i><i></i><span class="tab">Vault.sol</span><span>src/</span></div>
+    <div id="code"></div>
+    <div class="sbar"><span>SOLIDITY</span><span>UTF-8</span><span id="sbs"></span></div>
+  </div>
+  <div class="cmp" id="cA" style="top:380px">
+    <div class="t">STANDARD SOLIDITY</div><div class="big">uint256</div>
+    <div class="d">Unsigned integer. Anyone can read the value onchain.</div>
+    <div class="v"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M2 13s4-7 11-7 11 7 11 7-4 7-11 7S2 13 2 13z"/><circle cx="13" cy="13" r="3.4"/></svg><span>balance = 1,000,000</span></div>
+  </div>
+  <div class="cmp" id="cB" style="top:690px">
+    <div class="t">SEISMIC SHIELDED TYPE</div><div class="big"><span style="color:var(--pink)">s</span>uint256</div>
+    <div class="d">Works with confidential values, protected by Seismic's privacy mechanisms.</div>
+    <div class="v"><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="5" y="11" width="16" height="12" rx="3"/><path d="M8.5 11V8a4.5 4.5 0 0 1 9 0v3"/></svg><span id="cBv">balance = 1,000,000</span></div>
+  </div>
+</div>
+
+<!-- 4 · compile -->
+<div class="sc" id="s4">
+  <div class="grid"></div>
+  <div class="chap"><div class="num">03<b>03</b></div><div class="txt"><div class="lbl">Step 03</div><h2><div class="ln"><span>Compile and Test Your Contract</span></div></h2><p>Build with sforge. Run a local node with sanvil.</p></div></div>
+  <div class="win" id="tw" style="left:120px;top:380px;width:1000px;height:600px">
+    <div class="tb"><i></i><i></i><i></i><span>~/vault — zsh</span></div>
+    <div id="term"></div>
+  </div>
+  <div class="cmp" id="rem" style="top:380px;height:600px;padding:40px">
+    <div class="t" style="color:var(--mauve)">REMEMBER</div>
+    <div style="font-family:'Inter Display';font-weight:600;font-size:33px;line-height:1.18;letter-spacing:-.02em;margin-top:14px">A confidential data type is<br>only part of the process.</div>
+    <div class="row" style="top:200px"><div class="cb"></div>Confidential data types<small>suint256</small></div>
+    <div class="row" style="top:296px"><div class="cb"></div>Access controls<small>EQUALLY</small></div>
+    <div class="row" style="top:392px"><div class="cb"></div>Data visibility<small>IMPORTANT</small></div>
+    <div class="row" style="top:488px"><div class="cb"></div>Secure application design<small></small></div>
+  </div>
+</div>
+
+<!-- 5 · applications -->
+<div class="sc" id="s5" style="perspective:1600px">
+  <div class="grid"></div>
+  <div class="chap"><div class="num">04<b>04</b></div><div class="txt"><div class="lbl">Step 04</div><h2><div class="ln"><span>Explore Real-World Applications</span></div></h2><p>Once you understand the basics, go further.</p></div></div>
+  <div id="apps"></div>
+  <div class="foot" id="f5" style="top:892px">Each application requires <b>careful implementation and security testing.</b></div>
+</div>
+
+<!-- 6 · why -->
+<div class="sc dark" id="s6">
+  <div class="grid"></div>
+  <div class="abs" id="spd" style="inset:0"></div>
+  <div class="abs" id="L6" style="width:720px;height:1047px;left:1240px;top:30px"></div>
+  <div class="abs lbl" id="l6" style="left:160px;top:216px;color:var(--pink)">Why does Seismic matter?</div>
+  <div class="abs ttl" id="w6a" style="left:160px;top:290px;font-size:104px;line-height:1.04">
+    <div class="ln"><span>The future of blockchain</span></div>
+    <div class="ln"><span>isn't just about</span></div>
+    <div class="ln" style="overflow:visible"><span style="position:relative;color:var(--pink)">faster transactions.<i id="strike"></i></span></div>
+  </div>
+  <div class="abs ttl" id="w6b" style="left:160px;top:300px;font-size:82px;line-height:1.1">
+    <div class="ln"><span>How can we benefit from onchain finance</span></div>
+    <div class="ln"><span>without exposing <span class="red" id="red">every detail<i></i></span> of our</span></div>
+    <div class="ln"><span>financial activity to the public?</span></div>
+  </div>
+</div>
+
+<!-- 7 · outro -->
+<div class="sc" id="s7">
+  <div class="grid"></div>
+  <div class="ring" id="r7a"></div><div class="ring" id="r7b"></div><div class="ring" id="r7c"></div>
+  <div class="abs" id="L7" style="width:165px;height:240px;left:877px;top:130px"></div>
+  <div class="abs" id="wm" style="left:0;right:0;top:396px;text-align:center;font-family:'Inter Display';font-weight:600;font-size:118px;letter-spacing:-.04em;line-height:1"></div>
+  <div class="abs" id="tag" style="left:0;right:0;top:538px;text-align:center;font-size:28px;color:var(--g500)">Bringing privacy-focused capabilities to smart contracts &amp; financial infrastructure.</div>
+  <div class="pill" id="p1" style="left:484px"><svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="2.4"><circle cx="17" cy="17" r="13"/><path d="M4 17h26M17 4c4 4 5.5 8.5 5.5 13S21 26 17 30c-4-4-5.5-8.5-5.5-13S13 8 17 4z"/></svg>seismic.systems<small>↗</small></div>
+  <div class="pill" id="p2" style="left:976px"><svg width="34" height="34" viewBox="0 0 34 34" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"><path d="M4 7c5-2 9-1 13 2 4-3 8-4 13-2v20c-5-2-9-1-13 2-4-3-8-4-13-2z"/><path d="M17 9v20"/></svg>docs.seismic.systems<small>↗</small></div>
+  <div class="abs" id="q7" style="left:0;right:0;top:800px;text-align:center;font-family:'Inter Display';font-weight:600;font-size:42px;line-height:1.22;letter-spacing:-.02em">
+    <div class="ln"><span>Do you think onchain privacy will become essential</span></div>
+    <div class="ln"><span>for the next generation of <span style="color:var(--mauve)">financial applications?</span></span></div>
+  </div>
+</div>
+
+</div><!-- world -->
+
+<div id="flash"></div>
+<div id="hud">
+  <div class="tl"><span id="hudLogo"></span><span>SEISMIC</span></div>
+  <div class="tr">CONFIDENTIAL SMART CONTRACTS</div>
+  <div class="bar"><i></i></div>
+</div>
+<svg id="wipe" width="1920" height="1080"></svg>
+<div id="rip"></div>
+<svg id="cur" viewBox="-2 -2 28 38"><path d="M0 0V29.5L7.6 22.6 12.6 33.6 18 31.2 13.1 20.6H23.4Z" fill="#161616" stroke="#fff" stroke-width="2.2" stroke-linejoin="round"/></svg>
+</div>
+
+<script>
+const DUR = 81, FPS = 60;
+const $ = id => document.getElementById(id);
+const Q = (s, r = document) => [...r.querySelectorAll(s)];
+const cl = (x, a = 0, b = 1) => x < a ? a : x > b ? b : x;
+const pr = (t, a, d) => cl((t - a) / d);
+const lerp = (a, b, k) => a + (b - a) * k;
+const E = {
+  o3: x => 1 - (1 - x) ** 3, o5: x => 1 - (1 - x) ** 5, i3: x => x ** 3,
+  io: x => x < .5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2,
+  ex: x => x >= 1 ? 1 : 1 - 2 ** (-10 * x),
+  bk: x => { const c = 1.9, c3 = c + 1; return 1 + c3 * (x - 1) ** 3 + c * (x - 1) ** 2; },
+};
+const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+const mix = (a, b, k) => { const A = hex(a), B = hex(b); return `rgb(${A.map((v, i) => Math.round(lerp(v, B[i], k))).join(',')})`; };
+const hash = n => { const s = Math.sin(n * 12.9898) * 43758.5453; return s - Math.floor(s); };
+const GLY = '#$%&*+=<>/\\01ABCDEFXZ';
+const scr = (str, k, seed, t) => [...str].map((c, i) => {   // decode/encode scramble, k: 0 = scrambled, 1 = resolved
+  if (c === ' ' || c === ',' || c === '.') return c;
+  return k * (str.length + 4) > i + 4 * hash(i + seed) ? c : GLY[Math.floor(hash(i * 7 + seed + Math.floor(t * 24)) * GLY.length)];
+}).join('');
+function st(el, o) {
+  let tr = '';
+  if (o.x || o.y) tr += `translate(${o.x || 0}px,${o.y || 0}px) `;
+  if (o.s != null && o.s !== 1) tr += `scale(${o.s}) `;
+  if (o.ry) tr += `rotateY(${o.ry}deg) `;
+  if (o.r) tr += `rotate(${o.r}deg) `;
+  el.style.transform = tr || 'none';
+  if (o.o != null) el.style.opacity = o.o;
+  if (o.b != null) el.style.filter = o.b > .05 ? `blur(${o.b}px)` : 'none';
+}
+// enter at a, leave at b (b optional)
+function vis(el, t, a, b = 1e9, dy = 40, din = .8, dout = .45) {
+  const k1 = E.o5(pr(t, a, din)), k2 = E.i3(pr(t, b, dout));
+  st(el, { y: (1 - k1) * dy - k2 * dy * .7, o: k1 * (1 - k2), b: (1 - k1) * 10 + k2 * 8 });
+}
+// masked line rise for .ln>span children
+function lines(root, t, a, step = .1, b = 1e9) {
+  Q('.ln>span', root).forEach((s, i) => {
+    const k = E.o5(pr(t, a + i * step, .95)), k2 = E.i3(pr(t, b + i * .05, .5));
+    s.style.transform = `translateY(${((1 - k) - k2) * 110}%)`;
+  });
+}
+
+/* ---------- logo ---------- */
+const FACETS = [
+  { p: [[199, 49], [275, 84], [263, 190], [195, 100]], c: '#6E4A5B', d: [30, -300, -80] },
+  { p: [[190, 59], [187, 101], [116, 195]], c: '#5E3F4E', d: [-300, -160, 140] },
+  { p: [[193, 108], [263, 203], [164, 345], [95, 236]], c: '#523542', d: [-320, 160, -70] },
+  { p: [[280, 108], [300, 234], [271, 199]], c: '#9C7A8B', d: [300, -90, 170] },
+  { p: [[271, 208], [300, 248], [261, 354], [171, 354]], c: '#825A6D', d: [220, 300, -120] },
+];
+const logoSVG = (cols) => `<svg class="logo" viewBox="88 42 220 320" width="100%" height="100%">${FACETS.map((f, i) =>
+  `<polygon points="${f.p.map(q => q.join(',')).join(' ')}" fill="${cols ? cols[i] : f.c}"/>`).join('')}</svg>`;
+function assemble(host, t, t0, dur = 1.3, spread = 1) {
+  Q('polygon', host).forEach((pg, i) => {
+    const k = E.ex(pr(t, t0 + i * .07, dur)), d = FACETS[i].d;
+    pg.style.transform = k >= 1 ? 'none' : `translate(${d[0] * (1 - k) * spread}px,${d[1] * (1 - k) * spread}px) rotate(${d[2] * (1 - k)}deg) scale(${lerp(.4, 1, k)})`;
+    pg.style.opacity = cl(k * 2.5);
+  });
+}
+function ring(el, t, t0, cx, cy, R = 700, d = 1.5) {
+  const k = pr(t, t0, d);
+  if (k <= 0 || k >= 1) { el.style.opacity = 0; return; }
+  const r = E.o3(k) * R;
+  Object.assign(el.style, { left: cx - r + 'px', top: cy - r + 'px', width: 2 * r + 'px', height: 2 * r + 'px', opacity: (1 - k) * .8 });
+}
+
+/* ---------- static builds ---------- */
+['L0', 'L1', 'L7'].forEach(id => $(id).innerHTML = logoSVG());
+$('L6').innerHTML = logoSVG(['#6E4A5B', '#5E3F4E', '#5E3F4E', '#9C7A8B', '#825A6D']);
+$('hudLogo').innerHTML = logoSVG();
+$('wm').innerHTML = [...'Seismic'].map(c => `<span style="display:inline-block">${c}</span>`).join('');
+
+const BLOCKS = [
+  ['#19,284,301', '0x8f3a…a21c', '0x4c19…9be0', '12,500.00 USDC', 'Payroll · March'],
+  ['#19,284,302', '0x2b7e…11f4', '0x9a0d…c3e7', '3,200.00 USDT', 'Rent · Apt 4B'],
+  ['#19,284,303', '0x71cc…0e98', '0x5f2a…ab41', '248,000.00 USDC', 'Treasury move'],
+  ['#19,284,304', '0x0d4b…7c22', '0xe6a1…5d90', '940.50 USDC', 'Medical bill'],
+  ['#19,284,305', '0x8f3a…a21c', '0x3b88…f017', '57,310.00 USDC', 'Supplier invoice'],
+  ['#19,284,306', '0xa9e3…44b6', '0x7d15…2e8c', '1,250.00 USDC', 'Salary · Alice'],
+  ['#19,284,307', '0x6c02…d9a7', '0x1f4e…80b3', '18,900.00 USDC', 'OTC trade'],
+];
+$('chain').innerHTML = BLOCKS.map((b, i) => `<div class="blk" style="left:${120 + i * 416}px"><div class="bh"><span>BLOCK</span><span>${b[0]}</span></div>` +
+  ['FROM', 'TO', 'AMOUNT', 'NOTE'].map((l, j) => `<div class="row"><i>${l}</i><b data-v="${b[j + 1]}">${b[j + 1]}</b></div>`).join('') +
+  `<div class="stamp">PUBLIC</div></div>` + (i < BLOCKS.length - 1 ? `<div class="link" style="left:${480 + i * 416}px"></div>` : '')).join('');
+
+const APPS = [
+  ['Confidential balances', '<rect x="14" y="40" width="64" height="16" rx="8"/><rect x="14" y="24" width="64" height="16" rx="8"/><rect x="14" y="56" width="64" height="16" rx="8"/><rect x="58" y="58" width="34" height="26" rx="5" fill="#fff"/><path d="M66 58v-6a9 9 0 0 1 18 0v6"/>'],
+  ['Private financial transfers', '<path d="M10 34h60l-12-12"/><path d="M86 62H26l12 12"/><circle cx="48" cy="48" r="7" fill="currentColor" stroke="none" opacity=".25"/>'],
+  ['Stablecoin payments', '<circle cx="48" cy="48" r="34"/><path d="M58 36c-3-4-7-5-11-5-6 0-10 3-10 8 0 11 22 6 22 17 0 5-5 8-11 8-5 0-9-2-12-6M48 24v8M48 64v8"/>'],
+  ['Privacy-enabled DeFi apps', '<circle cx="48" cy="20" r="9"/><circle cx="20" cy="70" r="9"/><circle cx="76" cy="70" r="9"/><path d="M43 28 25 62M53 28l18 34M29 70h38"/><circle cx="48" cy="54" r="6" fill="currentColor" stroke="none"/>'],
+  ['Contracts with sensitive financial data', '<path d="M22 12h36l16 16v56H22z"/><path d="M58 12v16h16"/><path d="M48 44l14 6v10c0 9-6 14-14 17-8-3-14-8-14-17V50z"/>'],
+];
+$('apps').innerHTML = APPS.map((a, i) => `<div class="ap" style="left:${122 + i * 340}px"><div class="ix">0${i + 1}</div><svg width="96" height="96" viewBox="0 0 96 96" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linejoin="round" stroke-linecap="round">${a[1]}</svg><h3>${a[0]}</h3></div>`).join('');
+
+$('spd').innerHTML = Array.from({ length: 22 }, (_, i) => `<div class="spd" style="top:${60 + hash(i + 3) * 960}px;width:${220 + hash(i + 9) * 520}px"></div>`).join('');
+
+/* ---------- code editor ---------- */
+const CODE = [
+  [['cm', '// SPDX-License-Identifier: MIT']],
+  [['kw', 'pragma'], ['', ' solidity '], ['nu', '^0.8.13'], ['', ';']],
+  [],
+  [['kw', 'contract'], ['', ' '], ['fn', 'Vault'], ['', ' {']],
+  [['', '    '], ['ty', 'uint256', 'T1'], ['', ' '], ['kw', 'private'], ['', ' balance;']],
+  [],
+  [['', '    '], ['kw', 'function'], ['', ' '], ['fn', 'deposit'], ['', '('], ['ty', 'uint256', 'T2'], ['', ' amount) '], ['kw', 'public'], ['', ' {']],
+  [['', '        balance += amount;']],
+  [['', '    }']],
+  [['', '}']],
+];
+const TYPE0 = 33.15, CPS = 52;
+const SWAP = { T1: [38.3, 38.62], T2: [39.62, 39.94] };   // [select, replace]
+function codeHTML(t) {
+  let n = Math.floor((t - TYPE0) * CPS), out = '', caretDone = false;
+  const typing = n >= 0 && n < CODE.reduce((s, l) => s + l.reduce((a, k) => a + k[1].length, 0) + 1, 0);
+  CODE.forEach((line, li) => {
+    let h = '';
+    for (const [c, s, id] of line) {
+      if (n <= 0) break;
+      const part = s.slice(0, n); n -= part.length;
+      if (id && part === s) {
+        const [sel, rep] = SWAP[id];
+        const kS = pr(t, sel, .12), kR = pr(t, rep, .5);
+        let style = '', inner = s;
+        if (t >= rep) {
+          const pop = E.bk(pr(t, rep, .35));
+          inner = `<b style="transform:scale(${lerp(.2, 1, pop)}) translateY(${(1 - pop) * -14}px);color:#fff">s</b>${s}`;
+          const g = 1 - E.o3(pr(t, rep + .3, 1.6)) * .55;
+          style = `background:rgba(130,90,109,${.55 * g + .2});box-shadow:0 0 0 1.5px #825A6D,0 0 ${34 * g}px rgba(211,175,192,${.6 * g});color:#F6E4EC`;
+        } else if (t >= sel) style = `background:rgba(130,90,109,${.6 * kS});color:#fff`;
+        h += `<span class="tok ${c}" data-id="${id}" style="${style}">${inner}</span>`;
+      } else h += c ? `<span class="${c}">${part}</span>` : part;
+    }
+    if (!caretDone && typing && n <= 0) { h += '<span class="caret"></span>'; caretDone = true; }
+    else if (n > 0) n--;   // newline
+    else if (!caretDone && !typing && li === CODE.length - 1 && t > TYPE0 && t < 37.3 && Math.floor(t * 2.2) % 2 === 0) h += '<span class="caret"></span>';
+    out += `<div class="l"><span class="n">${li + 1}</span><span>${h}</span></div>`;
+  });
+  return out;
+}
+
+/* ---------- terminal ---------- */
+const SPIN = '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏';
+const typed = (s, t, a, cps = 18) => s.slice(0, Math.max(0, Math.floor((t - a) * cps)));
+function termHTML(t) {
+  const L = [];
+  const cmd = (s, a) => t >= a && L.push(`<span class="p">❯</span> ${typed(s, t, a)}${t < a + s.length / 18 + .25 && Math.floor(t * 3) % 2 === 0 ? '<span class="caret" style="height:30px"></span>' : ''}`);
+  cmd('sforge build', 44.95);
+  if (t >= 45.85) L.push(`<span class="dim">[${t < 47.05 ? SPIN[Math.floor(t * 14) % 10] : '✓'}]</span> Compiling 1 file with ssolc`);
+  if (t >= 46.2) { const k = E.io(pr(t, 46.2, .85)), w = 26; L.push(`<span class="dim">    </span><span class="p">${'█'.repeat(Math.round(k * w))}</span><span class="dim">${'░'.repeat(w - Math.round(k * w))}</span> <span class="dim">${Math.round(k * 100)}%</span>`); }
+  if (t >= 47.15) L.push(`<span class="ok">✓ Compiler run successful</span>`);
+  if (t >= 47.55) L.push('');
+  cmd('sanvil', 47.7);
+  if (t >= 48.25) L.push(`<span class="dim">  Seismic local dev node</span>`);
+  if (t >= 48.45) L.push(`  Listening on <span class="p">127.0.0.1:8545</span>`);
+  if (t >= 48.75) { const b = 1 + Math.floor((t - 48.75) / .45); L.push(`  <span class="p">●</span> block <span class="ok">#${b}</span> <span class="dim">· local node live</span>`); }
+  return L.join('\n');
+}
+
+/* ---------- cursor ---------- */
+const CUR = [
+  [23.6, 1720, 1100, 0], [24.0, 1640, 1000, 1], [24.62, 380, 690, 1], [24.9, 380, 690, 1], [25.9, 960, 690, 1], [26.2, 960, 690, 1], [27.4, 1540, 690, 1], [27.7, 1540, 690, 1], [28.7, 1660, 980, 1], [29.0, 1700, 1040, 0],
+  [37.2, 1500, 1100, 0], [37.55, 1400, 990, 1], [38.05, 'T1', 0, 1], [38.75, 'T1', 0, 1], [39.4, 'T2', 0, 1], [40.1, 'T2', 0, 1], [40.8, 1150, 1010, 1], [41.1, 1180, 1060, 0],
+  [49.8, 1720, 1100, 0], [50.1, 1640, 1000, 1], [50.45, 1264, 716, 1], [50.75, 1264, 716, 1], [51.25, 1264, 812, 1], [51.55, 1264, 812, 1], [52.05, 1264, 908, 1], [52.4, 1264, 908, 1], [53.1, 1660, 1000, 1], [53.4, 1700, 1050, 0],
+  [57.7, 200, 1100, 0], [58.0, 230, 780, 1], ...[0, 1, 2, 3, 4].flatMap(i => [[58.3 + i * .7, 300 + i * 340, 640, 1], [58.55 + i * .7, 300 + i * 340, 640, 1]]), [61.7, 1560, 980, 1], [62.0, 1600, 1050, 0],
+  [75.3, 1500, 1100, 0], [75.6, 1380, 1000, 1], [75.95, 700, 690, 1], [76.6, 700, 690, 1], [77.0, 1190, 690, 1], [77.6, 1190, 690, 1], [78.3, 1600, 1010, 1], [78.6, 1640, 1060, 0],
+];
+const CLICKS = [24.72, 26.05, 27.55, 38.12, 38.26, 39.48, 39.62, 50.55, 51.35, 52.15, 76.15, 77.2];
+const TPOS = {};
+function cursor(t) {
+  const el = $('cur');
+  let x = 0, y = 0, o = 0;
+  const P = a => typeof a[1] === 'string' ? (TPOS[a[1]] || [960, 540]) : [a[1], a[2]];
+  for (let i = 0; i < CUR.length - 1; i++) {
+    const a = CUR[i], b = CUR[i + 1];
+    if (t < a[0] || t >= b[0]) continue;
+    if (a[3] === 0 && b[3] === 0) break;
+    const k = E.io((t - a[0]) / (b[0] - a[0])), A = P(a), B = P(b);
+    x = lerp(A[0], B[0], k); y = lerp(A[1], B[1], k) - Math.sin(k * Math.PI) * 18 * (Math.hypot(B[0] - A[0], B[1] - A[1]) > 20);
+    o = lerp(a[3], b[3], k);
+    break;
+  }
+  let press = 1;
+  const rip = $('rip'); rip.style.opacity = 0;
+  for (const c of CLICKS) {
+    const d = t - c;
+    if (d > -.06 && d < .14) press = .82;
+    if (d >= 0 && d < .5) {
+      const k = E.o3(d / .5), r = 12 + k * 46;
+      Object.assign(rip.style, { left: x - r + 'px', top: y - r + 'px', width: 2 * r + 'px', height: 2 * r + 'px', opacity: (1 - k) * o });
+    }
+  }
+  el.style.opacity = o;
+  el.style.transform = `translate(${x - 2}px,${y - 2}px) scale(${1.25 * press})`;
+}
+
+/* ---------- transitions ---------- */
+const TR = [7, 21.5, 32, 44, 55.5, 64, 72.5];
+const WCOL = ['#825A6D', '#523542', '#161616'];
+function wipe(t) {
+  let h = '';
+  for (const T of TR) {
+    if (t < T - .8 || t > T + .8) continue;
+    WCOL.forEach((c, i) => {
+      const k = E.io(pr(t, T - .55 - (2 - i) * .08 + (i - 2) * 0, 1.1));
+      const x = lerp(2100, -3400, k) + (2 - i) * -0;
+      const lead = (2 - i) * 180;
+      h += `<polygon fill="${c}" points="${x + 520 + lead},0 ${x + 2900},0 ${x + 2580},1080 ${x + lead},1080"/>`;
+    });
+    // little logo riding the top shard
+    const k = E.io(pr(t, T - .55, 1.1)), x = lerp(2100, -3400, k);
+    h += `<g transform="translate(${x + 1500},540) scale(.55) translate(-198,-200)" opacity=".9">${FACETS.map(f => `<polygon points="${f.p.map(q => q.join(',')).join(' ')}" fill="#fff" opacity=".9"/>`).join('')}</g>`;
+  }
+  $('wipe').innerHTML = h;
+}
+
+/* ---------- scenes ---------- */
+const SC = [['s0', 0, 7, 0], ['s1', 7, 21.5, 1], ['s2', 21.5, 32, 0], ['s3', 32, 44, 0], ['s4', 44, 55.5, 0], ['s5', 55.5, 64, 0], ['s6', 64, 72.5, 1], ['s7', 72.5, 999, 0]];
+
+function chap(root, t, a) {
+  const c = root.querySelector('.chap');
+  const k = E.io(pr(t, a + .15, .9));
+  c.querySelector('.num b').style.clipPath = `inset(${(1 - k) * 100}% 0 0 0)`;
+  st(c.querySelector('.num'), { y: (1 - E.o5(pr(t, a, .9))) * 60, o: E.o3(pr(t, a, .5)) });
+  vis(c.querySelector('.lbl'), t, a + .15, 1e9, 20);
+  lines(c, t, a + .25);
+  vis(c.querySelector('p'), t, a + .5, 1e9, 24);
+}
+
+const S = {
+  s0(t) {
+    const r = $('s0');
+    assemble($('L0'), t, .25, 1.35);
+    const m = E.io(pr(t, 2.45, 1.0));
+    const cx = lerp(960, 400, m), cy = 540, sc = lerp(1.15, 1, m);
+    st($('L0'), { x: cx - 154, y: cy - 224, s: sc * (1 + .04 * Math.sin(pr(t, 1.6, .5) * Math.PI)) });
+    ['r0a', 'r0b', 'r0c'].forEach((id, i) => ring($(id), t, 1.55 + i * .17, cx, cy, 760 + i * 120, 1.6));
+    vis($('t0l'), t, 2.95, 1e9, 20);
+    lines(r.querySelector('.ttl'), t, 3.05, .11);
+    const kd = pr(t, 3.35, 1.0);
+    $('confT').textContent = kd >= 1 ? 'confidential' : scr('confidential', kd, 3, t);
+    const kb = E.io(pr(t, 4.45, .6));
+    $('conf').querySelector('i').style.transform = `scaleX(${kb})`;
+    $('conf').style.color = mix('#825A6D', '#FFFFFF', cl(kb * 1.6 - .3));
+  },
+  s1(t) {
+    const r = $('s1');
+    const blks = Q('.blk', r);
+    st($('chain'), { x: -(t - 7) * 34 });
+    lines($('h1a'), t, 7.45, .12, 11.9);
+    lines($('h1b'), t, 12.25, .14, 16.25);
+    vis($('h1a').querySelector('.lbl'), t, 7.35, 11.9, 20);
+    // lens sweep
+    const lk = pr(t, 8.9, 3.4), lo = E.o3(pr(t, 8.9, .4)) * (1 - E.i3(pr(t, 12.0, .35)));
+    const lx = lerp(160, 1780, E.io(lk)), ly = 690 + Math.sin(lk * Math.PI * 3) * 40;
+    st($('lens'), { x: lx, y: ly, o: lo, s: lerp(.6, 1, E.bk(pr(t, 8.9, .5))) });
+    // seismic slam
+    const slamA = 16.45, hit = 16.78;
+    const ks = pr(t, slamA, hit - slamA), kIn = E.i3(ks);
+    const mv = E.io(pr(t, 18.15, .9));
+    const lcx = 960, lcy = lerp(540, 196, mv), lh = lerp(300, 150, mv);
+    st($('L1'), { x: lcx - 103, y: lcy - 150, s: (lerp(3.2, 1, kIn) + .06 * Math.sin(pr(t, hit, .4) * Math.PI)) * lh / 300, o: cl(ks * 3) });
+    st($('glow1'), { x: lcx, y: lcy, s: lerp(.3, 1, E.o3(pr(t, hit, 1))) * lh / 300, o: E.o3(pr(t, hit - .1, .5)) });
+    ring($('r1'), t, hit, 960, 540, 2300, 1.9);
+    const R = E.o3(pr(t, hit, 1.9)) * 2300 * (t >= hit ? 1 : 0);
+    const chainX = -(t - 7) * 34;
+    blks.forEach((b, i) => {
+      const cx = 120 + i * 416 + 180 + chainX, cy = 680;
+      const ke = E.o5(pr(t, 7.5 + i * .09, 1));
+      const hl = lo * cl(1 - Math.abs(cx - lx) / 240);
+      const dist = Math.hypot(cx - 960, cy - 540);
+      const ksh = cl((R - dist) / 260);
+      const dim = 1 - .45 * E.io(pr(t, 12.1, .6)) * (1 - E.io(pr(t, hit, .4)));
+      st(b, { y: (1 - ke) * 140, o: ke * dim });
+      b.style.borderColor = ksh > 0 ? mix('#333333', '#825A6D', ksh) : mix('#333333', '#D3AFC0', hl);
+      b.style.background = mix('#1E1C1D', '#2B1D24', ksh);
+      b.style.boxShadow = ksh > 0 ? `0 0 ${50 * ksh}px rgba(130,90,109,${.35 * ksh})` : hl > 0 ? `0 0 40px rgba(211,175,192,${.25 * hl})` : 'none';
+      Q('b', b).forEach((v, j) => {
+        const s = v.dataset.v;
+        v.textContent = ksh <= 0 ? s : ksh >= 1 ? '••••••••••' : scr(s, 1 - ksh, i * 10 + j, t);
+        v.style.color = ksh >= 1 ? '#D3AFC0' : mix('#F2F2F2', '#D3AFC0', hl);
+        v.style.letterSpacing = ksh >= 1 ? '.18em' : '0';
+      });
+      const sp = b.querySelector('.stamp');
+      sp.textContent = ksh >= .5 ? '◆ SHIELDED' : 'PUBLIC';
+      sp.style.background = ksh >= .5 ? '#825A6D' : '#2C2A2B';
+      sp.style.color = ksh >= .5 ? '#fff' : '#A4A3A1';
+    });
+    // flash + shake
+    const fk = pr(t, hit, .5);
+    $('flash').style.opacity = t >= hit && fk < 1 ? (1 - fk) ** 2 * .35 : 0;
+    const sh = t >= hit ? (1 - pr(t, hit, .5)) ** 2 * 16 : 0;
+    st($('world'), { x: sh * (hash(Math.floor(t * 60)) - .5), y: sh * (hash(Math.floor(t * 60) + 7) - .5) });
+    lines($('h1c'), t, 18.55);
+  },
+  s2(t) {
+    const r = $('s2');
+    chap(r, t, 21.75);
+    const clk = [24.72, 26.05, 27.55];
+    Q('.tk', r).forEach((c, i) => {
+      const ke = E.o5(pr(t, 22.35 + i * .13, 1));
+      const on = E.o3(pr(t, clk[i], .3)) * (1 - (i < 2 ? E.o3(pr(t, clk[i + 1] - .3, .35)) : 0));
+      const done = t >= clk[i] ? 1 : 0;
+      st(c, { y: (1 - ke) * 90 - on * 16, o: ke });
+      c.style.background = mix('#FFFFFF', '#523542', on);
+      c.style.borderColor = mix('#E8E8E8', '#523542', on);
+      c.style.color = mix('#161616', '#FFFFFF', on);
+      c.querySelector('.ds').style.color = mix('#737373', '#E3CCD7', on);
+      c.querySelector('.ic').style.borderColor = on > .5 ? 'rgba(255,255,255,.2)' : '#E8E8E8';
+      c.querySelector('.ic').style.color = on > .5 ? '#D3AFC0' : '#825A6D';
+      c.querySelector('.top').style.transform = `scaleX(${E.o3(pr(t, clk[i], .5)) * done})`;
+      c.querySelector('.top').style.background = on > .5 ? '#D3AFC0' : '#825A6D';
+      const chip = c.querySelector('.chip'), cmds = ['$ sforge build', '$ sanvil', '$ ssolc Vault.sol'];
+      chip.textContent = t < clk[i] ? cmds[i] : cmds[i].slice(0, 2 + Math.floor((t - clk[i]) * 30)) + (t - clk[i] < .7 ? '▍' : '');
+      chip.style.background = on > .01 ? `rgba(255,255,255,${.1 * on})` : '#FCFCFC';
+      chip.style.border = `1px solid ${on > .5 ? 'rgba(255,255,255,.16)' : '#E8E8E8'}`;
+      chip.style.color = on > .5 ? '#fff' : done ? '#161616' : '#A4A3A1';
+    });
+    vis($('f2'), t, 28.9, 1e9, 20);
+  },
+  s3(t) {
+    const r = $('s3');
+    chap(r, t, 32.25);
+    vis($('ed'), t, 32.7, 1e9, 70, 1);
+    $('code').innerHTML = codeHTML(t);
+    $('sbs').innerHTML = t >= 38.62 ? '<b>◆ SHIELDED TYPES ACTIVE</b>' : '';
+    vis($('cA'), t, 34.6, 1e9, 50);
+    vis($('cB'), t, 38.85, 1e9, 50);
+    const kv = pr(t, 39.2, 1.1);
+    $('cBv').textContent = kv <= 0 ? 'balance = 1,000,000' : kv >= 1 ? 'balance = ••••••••' : 'balance = ' + scr('1,000,000', 1 - kv, 5, t);
+    st($('cB'), { y: (1 - E.o5(pr(t, 38.85, .8))) * 50, o: E.o5(pr(t, 38.85, .8)), s: 1 + .025 * Math.sin(pr(t, 39.94, .5) * Math.PI) });
+  },
+  s4(t) {
+    const r = $('s4');
+    chap(r, t, 44.25);
+    vis($('tw'), t, 44.55, 1e9, 70, 1);
+    $('term').innerHTML = termHTML(t);
+    vis($('rem'), t, 49.3, 1e9, 50);
+    const chk = [49.75, 50.55, 51.35, 52.15];
+    Q('#rem .row').forEach((row, i) => {
+      vis(row, t, 49.5 + i * .1, 1e9, 20);
+      const k = E.o3(pr(t, chk[i], .3));
+      row.style.background = mix('#FCFCFC', i ? '#F3EAEE' : '#523542', k);
+      row.style.color = i === 0 && k > .5 ? '#fff' : '#161616';
+      row.querySelector('small').style.color = i === 0 && k > .5 ? '#D3AFC0' : '#825A6D';
+      row.querySelector('small').style.opacity = i === 0 ? 1 : E.o3(pr(t, 52.6, .5));
+      const cb = row.querySelector('.cb');
+      cb.style.background = k > 0 ? mix('#FFFFFF', i ? '#825A6D' : '#D3AFC0', k) : '#fff';
+      cb.style.borderColor = k > .3 ? 'transparent' : '#D4D4D4';
+      cb.innerHTML = k > 0 ? `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="${i ? '#fff' : '#523542'}" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" stroke-dasharray="22" stroke-dashoffset="${22 * (1 - E.o3(pr(t, chk[i], .35)))}"/></svg>` : '';
+      st(cb, { s: 1 + .25 * Math.sin(pr(t, chk[i], .3) * Math.PI) });
+    });
+  },
+  s5(t) {
+    const r = $('s5');
+    chap(r, t, 55.75);
+    Q('.ap', r).forEach((c, i) => {
+      const k = E.o5(pr(t, 56.4 + i * .14, 1.1));
+      const H = 58.3 + i * .7 + .12, hv = E.io(cl(1.8 - Math.abs(t - H) / .38));
+      st(c, { y: (1 - k) * 120 - hv * 22, ry: (1 - k) * -75, o: cl(k * 1.5) });
+      c.style.background = mix('#FFFFFF', '#523542', hv);
+      c.style.borderColor = mix('#E8E8E8', '#523542', hv);
+      c.style.color = mix('#161616', '#FFFFFF', hv);
+      c.querySelector('svg').style.color = mix('#825A6D', '#D3AFC0', hv);
+      c.querySelector('.ix').style.color = mix('#825A6D', '#D3AFC0', hv);
+    });
+    vis($('f5'), t, 61.6, 1e9, 20);
+  },
+  s6(t) {
+    vis($('l6'), t, 64.35, 1e9, 20);
+    lines($('w6a'), t, 64.5, .13, 67.35);
+    $('w6a').style.opacity = 1 - pr(t, 67.45, .35);
+    $('strike').style.transform = `scaleX(${E.io(pr(t, 66.35, .45))})`;
+    $('strike').style.opacity = 1 - pr(t, 67.35, .3);
+    lines($('w6b'), t, 67.75, .15);
+    const red = $('red').querySelector('i'), a = E.io(pr(t, 69.05, .4)), b = E.io(pr(t, 69.9, .4));
+    red.style.transformOrigin = t < 69.7 ? '0 50%' : '100% 50%';
+    red.style.transform = `scaleX(${t < 69.7 ? a : 1 - b})`;
+    red.style.background = '#161616';
+    $('red').style.color = t > 69.9 ? '#D3AFC0' : '#fff';
+    const slow = 1 - E.io(pr(t, 66.2, .8)) * .93;
+    Q('.spd').forEach((s, i) => {
+      const sp = 1400 + hash(i) * 2200, w = parseFloat(s.style.width);
+      const tt = 64 + (Math.min(t, 66.2) - 64) + Math.max(0, Math.min(t, 67) - 66.2) * (.5) + Math.max(0, t - 67) * .07;
+      const x = 2200 - ((tt * sp + hash(i + 1) * 3000) % 3200);
+      s.style.transform = `translateX(${x}px)`;
+      s.style.opacity = (.25 + hash(i + 5) * .35) * (.3 + .7 * slow);
+      s.style.width = w + 'px';
+    });
+    st($('L6'), { r: (t - 64) * 1.2, o: .1 * E.o3(pr(t, 64.2, 1)), s: 1 + (t - 64) * .01 });
+  },
+  s7(t) {
+    assemble($('L7'), t, 72.75, 1.25, 1.2);
+    st($('L7'), { s: 1 + .05 * Math.sin(pr(t, 74.0, .5) * Math.PI) });
+    ['r7a', 'r7b', 'r7c'].forEach((id, i) => ring($(id), t, 73.95 + i * .17, 960, 250, 900 + i * 140, 1.7));
+    Q('#wm span').forEach((s, i) => { const k = E.o5(pr(t, 74.15 + i * .045, .8)); st(s, { y: (1 - k) * 60, o: k, b: (1 - k) * 12 }); });
+    vis($('tag'), t, 74.6, 1e9, 20);
+    [['p1', 75.0, 76.15, 76.75], ['p2', 75.12, 77.2, 77.75]].forEach(([id, a, c, d]) => {
+      const el = $(id), k = E.o5(pr(t, a, .8));
+      const on = E.o3(pr(t, c - .2, .3)) * (1 - E.o3(pr(t, d, .4)));
+      st(el, { y: (1 - k) * 40 - on * 8, o: k });
+      el.style.background = mix('#FFFFFF', '#523542', on);
+      el.style.borderColor = mix('#D4D4D4', '#523542', on);
+      el.style.color = mix('#161616', '#FFFFFF', on);
+      el.style.boxShadow = `0 ${20 * on}px ${40 * on}px -20px rgba(82,53,66,.6)`;
+    });
+    lines($('q7'), t, 77.65, .15);
+  },
+};
+
+let curScene = '';
+function render(t) {
+  t = cl(t, 0, DUR - 1e-6);
+  const stage = $('stage');
+  stage.style.setProperty('--gx', `${-(t * 14) % 96}px`);
+  stage.style.setProperty('--gy', `${-(t * 6) % 96}px`);
+  let dark = 0;
+  for (const [id, a, b, d] of SC) {
+    const on = t >= a && t < b;
+    $(id).style.display = on ? 'block' : 'none';
+    if (on) { S[id](t); dark = d; }
+  }
+  if (!(t >= 7 && t < 21.5)) { $('flash').style.opacity = 0; $('world').style.transform = 'none'; }
+  // HUD
+  const hud = $('hud'), ho = E.o3(pr(t, 3.6, .8)) * (1 - E.o3(pr(t, 72.2, .3)));
+  hud.style.opacity = ho;
+  hud.style.color = dark ? '#FFFFFF' : '#161616';
+  hud.querySelector('.tr').style.color = dark ? '#D3AFC0' : '#737373';
+  hud.querySelector('.bar i').style.width = (t / DUR * 100) + '%';
+  wipe(t);
+  cursor(t);
+}
+
+// marker labels on progress bar
+(() => {
+  const bar = $('hud');
+  [['01 TOOLKIT', 21.5], ['02 CONTRACT', 32], ['03 COMPILE', 44], ['04 APPLY', 55.5], ['WHY', 64]].forEach(([l, s]) => {
+    const d = document.createElement('div');
+    d.className = 'mk'; d.textContent = '    ' + l;
+    d.style.left = 60 + (1800 * s / DUR) + 'px';
+    d.style.opacity = .6;
+    bar.appendChild(d);
+  });
+})();
+
+// audio cue sheet for audio.py
+window.CUES = {
+  whoosh: TR.map(x => x - .5), impact: [1.62, 16.78, 73.95], clicks: CLICKS,
+  type: [[TYPE0, 37.2], [44.95, 45.62], [47.7, 48.05], [24.72, 25.2], [26.05, 26.4], [27.55, 28.1]],
+  swell: [16.0, 72.6], pops: [22.35, 22.48, 22.61, 34.6, 38.85, 38.62, 39.94, 49.75, 56.4, 56.54, 56.68, 56.82, 56.96, 47.15],
+  scramble: [[3.35, 4.35], [17.2, 18.4], [39.2, 40.3]],
+};
+
+window.ready = document.fonts.ready.then(() => {
+  // measure token centres for the cursor (stage coordinates)
+  render(38.0);
+  const sr = $('stage').getBoundingClientRect(), sc = sr.width / 1920;
+  ['T1', 'T2'].forEach(id => {
+    const r = document.querySelector(`[data-id="${id}"]`).getBoundingClientRect();
+    TPOS[id] = [(r.left - sr.left + r.width * .55) / sc, (r.top - sr.top + r.height * .62) / sc];
+  });
+  return true;
+});
+window.render = render; window.DUR = DUR; window.FPS = FPS;
+
+// live preview when opened directly
+if (!/[?&]r=1/.test(location.search)) {
+  const fit = () => { const s = Math.min(innerWidth / 1920, innerHeight / 1080); $('stage').style.transform = `translate(${(innerWidth - 1920 * s) / 2}px,${(innerHeight - 1080 * s) / 2}px) scale(${s})`; };
+  addEventListener('resize', fit); fit();
+  const m = location.hash.match(/t=([\d.]+)/);
+  let t0 = performance.now() - (m ? +m[1] : 0) * 1000, paused = false, pt = 0;
+  addEventListener('click', () => { paused = !paused; if (!paused) t0 = performance.now() - pt * 1000; });
+  window.ready.then(() => {
+    const loop = now => { if (!paused) { pt = ((now - t0) / 1000) % DUR; render(pt); } requestAnimationFrame(loop); };
+    requestAnimationFrame(loop);
+  });
+}
+</script>
+</body>
+</html>
